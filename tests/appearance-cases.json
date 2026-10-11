@@ -1,0 +1,20 @@
+[
+  {"name":"dark purple","json":"{\"theme\":\"obsidian\",\"accentColor\":\"#a78bfa\"}","systemDark":false,"dark":true,"accent":"#a78bfa"},
+  {"name":"light orange","json":"{\"theme\":\"moonstone\",\"accentColor\":\"#c2410c\"}","systemDark":true,"dark":false,"accent":"#c2410c"},
+  {"name":"system dark","json":"{\"theme\":\"system\"}","systemDark":true,"dark":true,"accent":"#7f6df2"},
+  {"name":"system light","json":"{\"theme\":\"system\"}","systemDark":false,"dark":false,"accent":"#7f6df2"},
+  {"name":"absent fields","json":"{}","systemDark":true,"dark":true,"accent":"#7f6df2"},
+  {"name":"empty mode and color","json":"{\"theme\":\"\",\"accentColor\":\"\"}","systemDark":false,"dark":false,"accent":"#7f6df2"},
+  {"name":"short RGB","json":"{\"theme\":\"moonstone\",\"accentColor\":\"#F80\"}","systemDark":false,"dark":false,"accent":"#ff8800"},
+  {"name":"RGB function","json":"{\"theme\":\"obsidian\",\"accentColor\":\"rgb(12, 128, 220)\"}","systemDark":false,"dark":true,"accent":"#0c80dc"},
+  {"name":"invalid RGB range","json":"{\"theme\":\"obsidian\",\"accentColor\":\"rgb(300,0,0)\"}","systemDark":false,"dark":true,"accent":"#7f6df2"},
+  {"name":"unknown mode","json":"{\"theme\":\"custom-new-mode\",\"accentColor\":\"#123456\"}","systemDark":false,"dark":false,"accent":"#7f6df2"},
+  {"name":"numeric mode","json":"{\"theme\":123}","systemDark":true,"dark":true,"accent":"#7f6df2"},
+  {"name":"null mode","json":"{\"theme\":null}","systemDark":false,"dark":false,"accent":"#7f6df2"},
+  {"name":"nonstring accent","json":"{\"theme\":\"obsidian\",\"accentColor\":44}","systemDark":false,"dark":true,"accent":"#7f6df2"},
+  {"name":"arbitrary CSS rejected","json":"{\"theme\":\"moonstone\",\"accentColor\":\"var(--anything)\"}","systemDark":true,"dark":false,"accent":"#7f6df2"},
+  {"name":"transparent color rejected","json":"{\"theme\":\"obsidian\",\"accentColor\":\"#00000000\"}","systemDark":false,"dark":true,"accent":"#7f6df2"},
+  {"name":"partial write","json":"{\"theme\":","systemDark":true,"dark":true,"accent":"#7f6df2"},
+  {"name":"UTF8 BOM","json":"﻿{\"theme\":\"obsidian\",\"accentColor\":\"#0f766e\"}","systemDark":false,"dark":true,"accent":"#0f766e"},
+  {"name":"unrelated settings ignored","json":"{\"theme\":\"moonstone\",\"accentColor\":\"#ffff00\",\"cssTheme\":\"Some theme\",\"enabledCssSnippets\":[\"test\"]}","systemDark":true,"dark":false,"accent":"#ffff00"}
+]

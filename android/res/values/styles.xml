@@ -1,0 +1,68 @@
+<resources>
+    <style name="VaultBridgeLight" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#f6f6f6</item>
+        <item name="android:colorBackground">#f6f6f6</item>
+        <item name="android:textColorPrimary">#252525</item>
+        <item name="android:textColorSecondary">#6b6b6b</item>
+        <item name="android:colorAccent">#6b6b6b</item>
+        <item name="android:colorControlNormal">#8a8a8a</item>
+        <item name="android:colorControlActivated">#252525</item>
+        <item name="android:colorControlHighlight">#206b6b6b</item>
+        <item name="android:colorButtonNormal">#f1f1f1</item>
+        <item name="android:scrollbarThumbVertical">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarThumbHorizontal">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarTrackVertical">@drawable/scroll_track</item>
+        <item name="android:scrollbarTrackHorizontal">@drawable/scroll_track</item>
+        <item name="android:scrollbarStyle">insideOverlay</item>
+        <item name="android:overScrollMode">never</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="VaultBridgeDark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#1e1e1e</item>
+        <item name="android:colorBackground">#1e1e1e</item>
+        <item name="android:textColorPrimary">#e5e5e5</item>
+        <item name="android:textColorSecondary">#a8a8a8</item>
+        <item name="android:colorAccent">#a8a8a8</item>
+        <item name="android:colorControlNormal">#757575</item>
+        <item name="android:colorControlActivated">#e5e5e5</item>
+        <item name="android:colorControlHighlight">#20a8a8a8</item>
+        <item name="android:colorButtonNormal">#2c2c2c</item>
+        <item name="android:scrollbarThumbVertical">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarThumbHorizontal">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarTrackVertical">@drawable/scroll_track</item>
+        <item name="android:scrollbarTrackHorizontal">@drawable/scroll_track</item>
+        <item name="android:scrollbarStyle">insideOverlay</item>
+        <item name="android:overScrollMode">never</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="VaultBridgeDialogLight" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorBackground">#ffffff</item>
+        <item name="android:textColorPrimary">#252525</item>
+        <item name="android:textColorSecondary">#6b6b6b</item>
+        <item name="android:colorAccent">#6b6b6b</item>
+        <item name="android:colorControlNormal">#8a8a8a</item>
+        <item name="android:colorControlActivated">#252525</item>
+        <item name="android:colorControlHighlight">#206b6b6b</item>
+        <item name="android:colorButtonNormal">#f1f1f1</item>
+        <item name="android:scrollbarThumbVertical">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarTrackVertical">@drawable/scroll_track</item>
+        <item name="android:scrollbarStyle">insideOverlay</item>
+        <item name="android:overScrollMode">never</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="VaultBridgeDialogDark" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:colorBackground">#252525</item>
+        <item name="android:textColorPrimary">#e5e5e5</item>
+        <item name="android:textColorSecondary">#a8a8a8</item>
+        <item name="android:colorAccent">#a8a8a8</item>
+        <item name="android:colorControlNormal">#757575</item>
+        <item name="android:colorControlActivated">#e5e5e5</item>
+        <item name="android:colorControlHighlight">#20a8a8a8</item>
+        <item name="android:colorButtonNormal">#2c2c2c</item>
+        <item name="android:scrollbarThumbVertical">@drawable/scroll_thumb</item>
+        <item name="android:scrollbarTrackVertical">@drawable/scroll_track</item>
+        <item name="android:scrollbarStyle">insideOverlay</item>
+        <item name="android:overScrollMode">never</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

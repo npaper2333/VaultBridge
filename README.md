@@ -1,0 +1,76 @@
+# VaultBridge
+
+作者：**Nitro**（[@npaper2333](https://github.com/npaper2333)）。
+
+把 Windows 电脑上的 Obsidian 笔记按需送到 Android 平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，平板接收副本。
+
+**免费、无云端、MIT 开源。当前版本为 0.3.4 预发布测试版。** Windows 与 APK 已构建并通过自动回归，Huawei MatePad Air 12 / HarmonyOS 4.2 的安装、触控、微信入口和目录授权仍需真机验收。
+
+[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4) · [快速上手](docs/quick-start.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
+
+## 下载与兼容性
+
+| 平台/文件 | 用途 |
+| --- | --- |
+| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-Desktop-0.3.4-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
+| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-Android-0.3.4.apk) | Android 8.0 / API 26 起，目标 API 35；当前面向 MatePad Air 12 / HarmonyOS 4.2。已有官方测试版直接覆盖安装，不要先卸载。 |
+| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-0.3.4-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
+| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/SHA256SUMS.txt) | 核对 Release 资产的 SHA-256。 |
+
+APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源码仓库不含签名私钥、SDK/JDK、安装包或笔记；安装包放在 Releases。自行构建的 APK 需用自己的密钥签名，通常不能覆盖官方签名版本。Obsidian 与微信需自行安装，本项目不是它们的官方产品。
+
+## 能做什么
+
+| 功能 | 行为 |
+| --- | --- |
+| 局域网同步 | 电脑选择允许分享的范围；平板选择整个库、文件夹或具体文件，只拉取新增或变化的内容。文件夹范围包含以后新增笔记。 |
+| 微信 ZIP 导入 | “用其他应用打开”选择 VaultBridge，应用解压并保存至所选库；也可在应用内选择 ZIP。支持中文目录和附件。 |
+| 备份与冲突 | 更新前备份；平板已有本地编辑时保留原笔记，将电脑版本放进冲突记录。支持预览、采用来源版本与恢复旧版。 |
+| 多库与目录整理 | 记住/切换库位置、浏览、新建文件夹、重命名、移动、维护同步目录对应；可以复制笔记到另一空库，保留原库。 |
+| 自动外观 | 固定“晴湖书架”布局，读取当前库的基础黑/白模式和强调色；中性背景、适度圆角，少量重要按钮使用强调色。 |
+| 离线使用 | 局域网不需要互联网；电脑关闭后，平板已接收的笔记仍可在 Obsidian 离线阅读。 |
+
+不自动回写电脑，不传播删除，不建设云服务。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
+
+## 五步开始
+
+1. 完整解压 Windows 包，打开 `VaultBridge-Desktop-0.3.4.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
+2. 把 APK 发送到平板并安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
+3. 平板打开 VaultBridge，选择目标文件夹；在 Obsidian 中使用同一个文件夹。建议首次使用临时测试库。
+4. 两端连接同一局域网，平板扫码电脑二维码，或粘贴电脑端复制的配对文字。
+5. 平板“选择笔记并同步”；以后用“同步上次范围”。电脑窗口关闭后静默留在托盘，右键“退出”完全停止。
+
+微信 ZIP：打开压缩包 →“用其他应用打开”→ VaultBridge。没有此入口时下载 ZIP，再在应用中“选择 ZIP”；解压和保存由应用完成。
+
+## 数据保护与限制
+
+- 相同内容跳过；更新前保留旧内容；本地修改形成冲突而不静默覆盖。首次同名不同内容也作为冲突处理。备份位于库内 `.vaultbridge/`，不自动清理。
+- ZIP 可选择“新建批次”或“合并更新”；电脑端可导出带清单的 ZIP。与联网同步维护同一批笔记时，选择同一目标库、合并模式、子目录留空。
+- 目录整理先展示影响，使用系统文件提供器能力；不支持的移动禁用。明确的 Markdown/Wikilink 引用可备份后修复；歧义、插件语法和引用式链接仍需人工检查。
+- 使用 TLS、首次配对证书指纹和独立设备授权；不是第三方安全审计结论。访问同网设备的前提是网络允许互通，校园/访客 Wi-Fi 可能隔离设备。
+- 隐藏目录、`.obsidian`、符号链接不分享/导入。选择部分笔记时，跨目录图片与附件须一并选择；不自动补齐全部链接依赖。
+- 每 ZIP 最大 512 MB，解压总量 1 GB，单文件 256 MB，最多 20,000 条目；不支持加密、分卷或 ZIP64。重试按文件进行，不支持文件内字节断点续传。
+- 当前不含云同步、自动发现、路由器/VPN 配置或开机启动；异地地址仅在用户自行具备可达网络时使用。
+- 卸载会失去应用私有配对和记录。更新请覆盖安装；操作真实库前先完成临时库验收。
+
+## 开发与验证
+
+原生 Windows Forms / C# 与原生 Android / Java；无需 Node 或 WebView 来运行正式应用。便携依赖只放项目 `tools/`，不修改全局 PATH。公开源码支持无签名 APK 构建，不提供发行私钥。
+
+```powershell
+# Windows，项目根目录，PowerShell 7 推荐
+./scripts/prepare-tools.ps1 -Download
+./scripts/build-desktop.ps1
+./scripts/build-android.ps1 -Unsigned
+./scripts/test.ps1
+```
+
+详细前提、签名方法和排错见 [构建说明](docs/building.md)。自动检查覆盖核心、跨端 TLS、目录状态、外观解析和配色；Windows 外观有原生回归，Android 配色检查不等于平板触控/渲染验收。见 [验证状态](docs/testing.md) 和 [真机清单](docs/acceptance.md)。
+
+## 文档与参与
+
+- [Windows 使用](docs/desktop-quick-start.md)、[Android 使用](docs/android-quick-start.md)、[完整使用说明](docs/quick-start.md)、[常见问题](docs/faq.md)
+- [外观规则](docs/appearance.md)、[功能约定](docs/design.md)、[协议](docs/protocol.md)、[第三方许可](docs/third-party.md)
+- [更新记录](CHANGELOG.md)、[贡献指南](CONTRIBUTING.md)、[安全与隐私](SECURITY.md)、[后续计划](docs/roadmap.md)
+
+VaultBridge 自身代码与文档采用 [MIT License](LICENSE)，第三方组件保留各自许可。问题反馈请勿附真实笔记、配对文字/二维码、授权令牌或签名私钥。

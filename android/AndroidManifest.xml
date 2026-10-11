@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.vaultbridge.app" android:versionCode="5" android:versionName="0.3.4">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <queries><package android:name="md.obsidian" /></queries>
+    <application android:label="VaultBridge" android:theme="@style/VaultBridgeLight" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|uiMode" android:windowSoftInputMode="adjustResize">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.SEND" /><category android:name="android.intent.category.DEFAULT" /><data android:mimeType="application/zip" /><data android:mimeType="application/x-zip-compressed" /><data android:mimeType="application/octet-stream" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="content" android:mimeType="application/zip" /><data android:scheme="content" android:mimeType="application/x-zip-compressed" /><data android:scheme="content" android:mimeType="application/octet-stream" /></intent-filter>
+        </activity>
+        <activity android:name=".ScanActivity" android:exported="false" android:screenOrientation="portrait" />
+    </application>
+</manifest>
