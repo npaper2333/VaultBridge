@@ -29,7 +29,7 @@ namespace VaultBridge {
                 // style before Windows calculates or paints any nonclient pixels.
                 if(message.Msg==0x83||message.Msg==0x85)owner.HideNativeStyle();
                 if((message.Msg==0xF||message.Msg==0x85)&&owner.NativeVerticalStyle!=0)owner.NativePaintWithScrollbar++;
-                CheckedListBox list=owner.content as CheckedListBox;int before=message.Msg==0x20A&&list!=null?list.TopIndex:0;
+                ListBox list=owner.content as ListBox;int before=message.Msg==0x20A&&list!=null?list.TopIndex:0;
                 base.WndProc(ref message);
                 // The native listbox ignores wheel input without WS_VSCROLL. Keep its
                 // normal input/events, then supply scrolling only if it did not move.
@@ -56,7 +56,7 @@ namespace VaultBridge {
             try{
                 Rail.Enabled=content.Enabled;
                 int maximum=0,position=0,page=1,step=Math.Max(1,content.Font.Height);
-                ScrollableControl panel=content as ScrollableControl;TextBox text=content as TextBox;CheckedListBox list=content as CheckedListBox;
+                ScrollableControl panel=content as ScrollableControl;TextBox text=content as TextBox;ListBox list=content as ListBox;
                 if(panel!=null){page=Math.Max(1,panel.ClientSize.Height);maximum=Math.Max(0,panel.DisplayRectangle.Height-page);position=-panel.AutoScrollPosition.Y;}
                 else if(text!=null){page=Math.Max(1,text.ClientSize.Height/Math.Max(1,text.Font.Height));maximum=Math.Max(0,SendMessage(text.Handle,0xBA,IntPtr.Zero,IntPtr.Zero).ToInt32()-page);position=SendMessage(text.Handle,0xCE,IntPtr.Zero,IntPtr.Zero).ToInt32();step=1;}
                 else if(list!=null){page=Math.Max(1,list.ClientSize.Height/Math.Max(1,list.ItemHeight));maximum=Math.Max(0,list.Items.Count-page);position=list.TopIndex;step=1;}
@@ -64,7 +64,7 @@ namespace VaultBridge {
             }finally{updating=false;}
         }
         internal void ScrollTo(int position){
-            position=Math.Max(0,Math.Min(Rail.Maximum,position));ScrollableControl panel=content as ScrollableControl;TextBox text=content as TextBox;CheckedListBox list=content as CheckedListBox;
+            position=Math.Max(0,Math.Min(Rail.Maximum,position));ScrollableControl panel=content as ScrollableControl;TextBox text=content as TextBox;ListBox list=content as ListBox;
             if(panel!=null)panel.AutoScrollPosition=new Point(-panel.AutoScrollPosition.X,position);
             else if(text!=null)SendMessage(text.Handle,0xB6,IntPtr.Zero,new IntPtr(position-SendMessage(text.Handle,0xCE,IntPtr.Zero,IntPtr.Zero).ToInt32()));
             else if(list!=null&&list.Items.Count>0)list.TopIndex=position;
@@ -82,6 +82,9 @@ namespace VaultBridge {
         protected override CreateParams CreateParams { get { CreateParams value=base.CreateParams;value.Style&=~0x00200000;return value; } }
     }
     sealed class ScrollScopeList : CheckedListBox {
+        protected override CreateParams CreateParams { get { CreateParams value=base.CreateParams;value.Style&=~0x00200000;return value; } }
+    }
+    sealed class ScrollTaskList : ListBox {
         protected override CreateParams CreateParams { get { CreateParams value=base.CreateParams;value.Style&=~0x00200000;return value; } }
     }
     sealed class ScrollRail : Control {

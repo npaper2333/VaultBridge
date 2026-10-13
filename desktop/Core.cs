@@ -61,6 +61,7 @@ namespace VaultBridge {
         public int port = 27183;
         public string vaultId = Guid.NewGuid().ToString("N");
         public string certificate;
+        public string inbox = "";
         public List<Device> devices = new List<Device>();
         public List<string> scopes = new List<string> { "" };
     }
@@ -182,6 +183,7 @@ namespace VaultBridge {
         readonly HashSet<TcpClient> activeClients = new HashSet<TcpClient>();
         int clients;
         public int Port { get; private set; }
+        public TransferHub Transfers;
         public string Fingerprint { get { return Crypto.Fingerprint(certificate); } }
         public VaultServer(Settings state, Action persist, Action<string> logger) { settings = state; save = persist; log = logger; }
         public void Start(bool loopback) {
@@ -222,15 +224,17 @@ namespace VaultBridge {
                                     if (settings.devices.Count >= 20) throw new IOException("已配对设备达到上限，请先撤销旧设备");
                                     Device device = new Device { name = Wire.Text(request, "device").Substring(0, Math.Min(60, Wire.Text(request, "device").Length)), token = Crypto.RandomToken(), pairedAt = DateTime.UtcNow.ToString("o") };
                                     settings.devices.Add(device); save(); pairingExpires = DateTime.MinValue;
-                                    Wire.Write(ssl, new { ok = true, token = device.token, vaultId = settings.vaultId, name = new DirectoryInfo(settings.vault).Name });
+                                    Wire.Write(ssl, new { ok = true, token = device.token, vaultId = settings.vaultId, name = Directory.Exists(settings.vault)?new DirectoryInfo(settings.vault).Name:"未选择笔记库" });
                                     log("已配对一台平板；原二维码失效");
                                 }
                                 return;
                             }
                             lock (gate) if (!settings.devices.Any(d => Crypto.Equal(d.token, Wire.Text(request, "token")))) throw new IOException("设备尚未配对或授权已撤销");
+                            if(Transfers!=null&&Transfers.Handle(action,request,ssl,Wire.Text(request,"token")))return;
                             VaultIndex index = new VaultIndex(settings.vault, settings.vaultId, settings.scopes);
                             if (action == "manifest") {
                                 VaultManifest manifest = index.Scan(Wire.Strings(request, "scopes"));
+                                if(Transfers!=null)Transfers.RememberNotes(manifest);
                                 Wire.Write(ssl, new { ok = true, manifest = manifest }); log("已提供笔记清单：" + manifest.files.Count + " 个文件");
                             } else if (action == "get") {
                                 string relative = Paths.Normalize(Wire.Text(request, "path"));

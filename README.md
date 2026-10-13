@@ -4,18 +4,20 @@
 
 把 Windows 电脑上的 Obsidian 笔记按需送到 Android 平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，平板接收副本。
 
-**免费、无云端、MIT 开源。当前版本为 0.3.4 预发布测试版。** Windows 与 APK 已构建并通过自动回归，Huawei MatePad Air 12 / HarmonyOS 4.2 的安装、触控、微信入口和目录授权仍需真机验收。
+**免费、无云端、MIT 开源。当前版本为 0.4.0 预发布。** 新版增加普通文件双向互传、分块续传与手动笔记回传。Huawei MatePad Air 12 / HarmonyOS 4.2 的安装、触控、微信入口和目录授权仍需真机验收。
 
-[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4) · [快速上手](docs/quick-start.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
+[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.0) · [快速上手](docs/quick-start.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
 ## 下载与兼容性
 
 | 平台/文件 | 用途 |
 | --- | --- |
-| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-Desktop-0.3.4-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
-| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-Android-0.3.4.apk) | Android 8.0 / API 26 起，目标 API 35；当前面向 MatePad Air 12 / HarmonyOS 4.2。已有官方测试版直接覆盖安装，不要先卸载。 |
-| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/VaultBridge-0.3.4-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
-| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.3.4/SHA256SUMS.txt) | 核对 Release 资产的 SHA-256。 |
+| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-Desktop-0.4.0-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
+| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-Android-0.4.0.apk) | Android 8.0 / API 26 起，目标 API 35；当前面向 MatePad Air 12 / HarmonyOS 4.2。已有官方测试版直接覆盖安装，不要先卸载。 |
+| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-0.4.0-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
+| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/SHA256SUMS.txt) | 核对以上三个 Release 资产的 SHA-256。 |
+
+两端一起更新后使用新增传输功能；[0.3.4 历史预发布](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4)保留。
 
 APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源码仓库不含签名私钥、SDK/JDK、安装包或笔记；安装包放在 Releases。自行构建的 APK 需用自己的密钥签名，通常不能覆盖官方签名版本。Obsidian 与微信需自行安装，本项目不是它们的官方产品。
 
@@ -29,18 +31,23 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 | 多库与目录整理 | 记住/切换库位置、浏览、新建文件夹、重命名、移动、维护同步目录对应；可以复制笔记到另一空库，保留原库。 |
 | 自动外观 | 固定“晴湖书架”布局，读取当前库的基础黑/白模式和强调色；中性背景、适度圆角，少量重要按钮使用强调色。 |
 | 离线使用 | 局域网不需要互联网；电脑关闭后，平板已接收的笔记仍可在 Obsidian 离线阅读。 |
+| 普通文件互传（0.4.0） | 独立接收目录，选择文件或文件夹，两端手动互传；ZIP 原样保存，同名变化另存，电脑接收逐批确认。 |
+| 大文件与续传（0.4.0） | 8 GiB 单文件、4 MiB 分块、暂停/继续、持久任务队列，网络故障有限退避后只补缺失块。 |
+| 平板笔记回传（0.4.0） | 平板主动勾选笔记/附件，默认电脑主库根目录，也可填库内子目录；电脑确认，同名变化另存。 |
 
-不自动回写电脑，不传播删除，不建设云服务。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
+不自动回写电脑，不传播删除，不建设云服务。0.4.0 的手动回传与常规主库同步分开，见 [普通文件与笔记回传](docs/file-transfer.md)。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
 
 ## 五步开始
 
-1. 完整解压 Windows 包，打开 `VaultBridge-Desktop-0.3.4.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
-2. 把 APK 发送到平板并安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
+1. 完整解压 Windows 0.4.0 包，打开 `VaultBridge-Desktop-0.4.0.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
+2. 把 `VaultBridge-Android-0.4.0.apk` 发送到平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
 3. 平板打开 VaultBridge，选择目标文件夹；在 Obsidian 中使用同一个文件夹。建议首次使用临时测试库。
 4. 两端连接同一局域网，平板扫码电脑二维码，或粘贴电脑端复制的配对文字。
 5. 平板“选择笔记并同步”；以后用“同步上次范围”。电脑窗口关闭后静默留在托盘，右键“退出”完全停止。
 
-微信 ZIP：打开压缩包 →“用其他应用打开”→ VaultBridge。没有此入口时下载 ZIP，再在应用中“选择 ZIP”；解压和保存由应用完成。
+微信 ZIP：打开压缩包 →“用其他应用打开”→ VaultBridge，选择笔记库导入。没有此入口时下载 ZIP，再在应用中“选择 ZIP”；解压和保存由应用完成。也可选择作为普通文件原样传给电脑。
+
+普通文件互传从两端“普通文件”进入；平板笔记回传从“电脑同步”进入。电脑接收每批都要确认，目标与同名规则见 [普通文件与笔记回传](docs/file-transfer.md)。
 
 ## 数据保护与限制
 
@@ -49,7 +56,7 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 - 目录整理先展示影响，使用系统文件提供器能力；不支持的移动禁用。明确的 Markdown/Wikilink 引用可备份后修复；歧义、插件语法和引用式链接仍需人工检查。
 - 使用 TLS、首次配对证书指纹和独立设备授权；不是第三方安全审计结论。访问同网设备的前提是网络允许互通，校园/访客 Wi-Fi 可能隔离设备。
 - 隐藏目录、`.obsidian`、符号链接不分享/导入。选择部分笔记时，跨目录图片与附件须一并选择；不自动补齐全部链接依赖。
-- 每 ZIP 最大 512 MB，解压总量 1 GB，单文件 256 MB，最多 20,000 条目；不支持加密、分卷或 ZIP64。重试按文件进行，不支持文件内字节断点续传。
+- ZIP 最大 512 MiB，解压总量 1 GiB，单文件 256 MiB，最多 20,000 条目；不支持加密、分卷或 ZIP64。0.4.0 普通文件单个最多 8 GiB/每批 64 GiB；常规笔记获取与普通互传均支持分块续传，两端都需更新。
 - 当前不含云同步、自动发现、路由器/VPN 配置或开机启动；异地地址仅在用户自行具备可达网络时使用。
 - 卸载会失去应用私有配对和记录。更新请覆盖安装；操作真实库前先完成临时库验收。
 

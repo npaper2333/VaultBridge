@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
     boolean appearanceAfterWork;
     AppLayout layout;
     LibraryUi libraryUi;
+    TransferUi transferUi;
     final ExecutorService worker = Executors.newSingleThreadExecutor();
     final List<View> actions = new ArrayList<>();
     final List<TextView> helpViews = new ArrayList<>();
@@ -54,7 +55,7 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         if(state!=null)currentPage=state.getInt("page",0);
         try {libraryUi=new LibraryUi(this);} catch(IOException ex){dialog().setTitle("库记录无法读取").setMessage(ex.getMessage()+"。已有笔记未变动；本次停止操作。").setPositiveButton("关闭",(d,w)->finish()).show();return;}
-        rebuildUi();receiveIntent(getIntent());
+        transferUi=new TransferUi(this);rebuildUi();receiveIntent(getIntent());
     }
     void rebuildUi() {
         if(busy){rebuildAfterWork=true;return;}
@@ -170,6 +171,7 @@ public class MainActivity extends Activity {
         JSONObject snapshot = manifest;
         runWork("正在比较平板和电脑的内容…", () -> {
             DocumentStore destination = store(); AndroidLedger records = ledger(); records.requireReady(); LanClient connection = client(); String source = "pc:" + snapshot.getString("vaultId"), batch = Engine.batchId(); File temp = work("sync"); int[] counts = new int[4]; int failed = 0, done = 0; List<String> errors = new ArrayList<>();
+            TransferClient resumable=new TransferClient(connection,this::log);transferUi.active=resumable;
             JSONArray files = snapshot.getJSONArray("files"); Set<String> available = new HashSet<>(); for (int i = 0; i < files.length(); i++) available.add(files.getJSONObject(i).getString("path")); List<String> selectedScopes = new ArrayList<>(); for (int i = 0; i < savedSelection.length(); i++) selectedScopes.add(savedSelection.getString(i)); Set<String> missing = kind.equals("scopes") ? Engine.selectScopes(records.managedPaths(source), selectedScopes) : new HashSet<>(selection); missing.removeAll(available);
             Map<String,String> targets=records.targets(available);List<String> linkWarnings=new ArrayList<>();
             for (int i = 0; i < files.length(); i++) {
@@ -178,12 +180,13 @@ public class MainActivity extends Activity {
                 try {
                     String expected=remote.getString("sha256"),target=targets.get(path);
                     if(destination.exists(target)){String local=Engine.hash(destination,target);if((records.routes().isEmpty()&&expected.equals(local))||(expected.equals(records.sourceHash(source,path))&&local.equals(records.baseline(source,target)))){records.baseline(source,target,local);records.sourceHash(source,path,expected);counts[2]++;continue;}}
-                    Engine.Item download=connection.download(remote,new File(temp,"file-"+i));
+                    String taskKey=TransferEngine.hash((source+"|"+prefs.getString("tree","")+"|"+path+"|"+expected).getBytes("UTF-8")).substring(0,32);transferUi.ensure();File transferFolder=TransferEngine.folder(transferUi.root,taskKey);JSONObject transferJob=new JSONObject().put("id",taskKey).put("mode","notes-download").put("files",new JSONArray().put(remote));File staged=resumable.download(transferJob,transferFolder,0);Engine.Item download=new Engine.Item(path,expected,remote.getLong("size"),staged);
                     Engine.Item incoming=localize(download,path,available,records,new File(temp,"mapped-"+i),linkWarnings);
                     Engine.Outcome outcome=Engine.apply(destination,records,incoming,target,source,batch,false);counts[outcome.ordinal()]++;
                     if(outcome!=Engine.Outcome.CONFLICT)records.sourceHash(source,path,expected);
-                } catch (Exception ex) { failed++; errors.add(path + "：" + ex.getMessage()); }
+                } catch (Exception ex) { failed++; errors.add(path + "：" + ex.getMessage());if(ex instanceof TransferEngine.Paused)break; }
             }
+            transferUi.active=null;
             prefs.edit().putString("lastSelection", savedSelection.toString()).putString("lastSelectionKind", kind).commit();
             String summary = summary("同步", counts, failed) + (errors.isEmpty() ? "" : "\n" + String.join("\n", errors.subList(0, Math.min(8, errors.size()))));
             if (!missing.isEmpty()) summary += "\n上次范围有 " + missing.size() + " 个文件目前未提供（可能已删除或分享范围变化），平板原文件保留。";
@@ -201,7 +204,12 @@ public class MainActivity extends Activity {
     String summary(String action, int[] counts, int failed) { return action + (failed == 0 ? "处理完成" : "部分完成") + "：新增 " + counts[0] + "，更新 " + counts[1] + "，相同跳过 " + counts[2] + "，冲突保留 " + counts[3] + "，失败 " + failed + "。" + (counts[3] > 0 ? "\n原笔记保留。到“备份与冲突版本”查看并选择采用来源版本。" : ""); }
     void result(String value) { prefs.edit().putString("lastResult", value).commit(); log(value); }
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); setIntent(intent); receiveIntent(intent); }
-    void receiveIntent(Intent intent) { if (intent == null || layout==null || libraryUi==null) return; Uri uri = null; if (Intent.ACTION_SEND.equals(intent.getAction())) uri = intent.getParcelableExtra(Intent.EXTRA_STREAM); else if (Intent.ACTION_VIEW.equals(intent.getAction())) uri = intent.getData(); if (uri != null) acceptZip(uri, true); }
+    void receiveIntent(Intent intent) {
+        if(intent==null||layout==null||libraryUi==null)return;
+        if(Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())){ArrayList<Uri> uris=intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);if(uris!=null)transferUi.shared(uris);return;}
+        Uri uri=null;if(Intent.ACTION_SEND.equals(intent.getAction()))uri=intent.getParcelableExtra(Intent.EXTRA_STREAM);else if(Intent.ACTION_VIEW.equals(intent.getAction()))uri=intent.getData();
+        if(uri!=null){if(!"content".equals(uri.getScheme())){alert("通过系统文件选择或分享可访问的文件。");return;}String name=displayName(uri);if(name.toLowerCase(Locale.ROOT).endsWith(".zip")){final Uri selected=uri;dialog().setTitle("收到 ZIP").setItems(new String[]{"导入 Obsidian 库（按原导入规则）","作为普通文件发送给电脑（不解压）"},(d,w)->{if(w==0)acceptZip(selected,true);else transferUi.shared(Collections.singletonList(selected));}).show();}else transferUi.shared(Collections.singletonList(uri));}
+    }
     void acceptZip(Uri uri, boolean external) {
         if (!"content".equals(uri.getScheme())) { alert("需要通过系统文件选择器或其他应用分享 ZIP。"); return; }
         pendingZip = uri; pendingZipName = displayName(uri); zipLabel.setText("已接收：" + pendingZipName); currentPage=1; if(!busy)layout.showPage(1);
@@ -253,9 +261,10 @@ public class MainActivity extends Activity {
     void openObsidian() { Intent intent = getPackageManager().getLaunchIntentForPackage("md.obsidian"); if (intent == null) alert("未找到可启动的 Obsidian。请从桌面打开；笔记已保存在所选目录。"); else startActivity(intent); }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data); if (result != RESULT_OK || data == null) return;
+        if(transferUi!=null&&transferUi.result(request,data))return;
         if(request==TREE&&data.getData()!=null){boolean first=prefs.getString("tree","").isEmpty();Uri uri=data.getData();int flags=data.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);try{libraryUi.accepted(uri,flags);updateLabels();if(first&&pendingZip!=null&&automatic.isChecked()&&!busy&&!prefs.getString("tree","").isEmpty())importZip(false);}catch(Exception ex){alert("目录授权未完成："+ex.getMessage());}}
         else if (request == ZIP && data.getData() != null) acceptZip(data.getData(), false);
         else if (request == SCAN) pair(data.getStringExtra("pairing"));
     }
-    @Override protected void onDestroy() { if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true; worker.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() { if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
 }

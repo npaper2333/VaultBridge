@@ -23,7 +23,7 @@ Google SDK 下载摘要按官方仓库 XML 验证；本机下载 SHA-256 记录�
 ./scripts/build-desktop.ps1
 ```
 
-输出 `dist/VaultBridge-Desktop-0.3.4.exe` 与同名 `.exe.config`。图标由源码生成，QRCoder DLL 嵌入 EXE。发布和运行都需保留配置文件，否则高清缩放行为可能不同。
+输出 `dist/VaultBridge-Desktop-0.4.0.exe` 与同名 `.exe.config`。图标由源码生成，QRCoder DLL 嵌入 EXE。发布和运行都需保留配置文件，否则高清缩放行为可能不同。
 
 ## Android：先构建无签名 APK
 
@@ -31,7 +31,7 @@ Google SDK 下载摘要按官方仓库 XML 验证；本机下载 SHA-256 记录�
 ./scripts/build-android.ps1 -Unsigned
 ```
 
-输出 `dist/VaultBridge-Android-0.3.4-unsigned.apk`，Java 8 字节码、最低 API 26、目标 API 35、版本码 5。脚本在带 `VaultBridge-build-` 前缀的 ASCII 临时目录生成 Java/DEX/资源并对齐，不自动清理。
+输出 `dist/VaultBridge-Android-0.4.0-unsigned.apk`，Java 8 字节码、最低 API 26、目标 API 35、版本码 6。脚本在带 `VaultBridge-build-` 前缀的 ASCII 临时目录生成 Java/DEX/资源并对齐，不自动清理。
 
 无签名 APK 不能直接安装。发行签名私钥没有公开，默认不带 `-Unsigned` 的模式只供持有既有项目测试密钥的维护者使用，缺少密钥会停止；不会自动创建或替换密钥。
 
@@ -42,7 +42,7 @@ $buildTools = (Get-ChildItem './tools/android-sdk/build-tools' -Directory | Sele
 $jdk = (Get-ChildItem './tools' -Directory | Where-Object Name -Like 'jdk-17*' | Select-Object -First 1).FullName
 $java = Join-Path $jdk 'bin/java.exe'
 $signer = Join-Path $buildTools 'lib/apksigner.jar'
-& $java -jar $signer sign --ks './tools/your-keystore.jks' --out './dist/VaultBridge-custom.apk' './dist/VaultBridge-Android-0.3.4-unsigned.apk'
+& $java -jar $signer sign --ks './tools/your-keystore.jks' --out './dist/VaultBridge-custom.apk' './dist/VaultBridge-Android-0.4.0-unsigned.apk'
 & $java -jar $signer verify --verbose './dist/VaultBridge-custom.apk'
 ```
 

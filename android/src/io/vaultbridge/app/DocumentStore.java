@@ -48,6 +48,20 @@ final class DocumentStore implements DirectoryEngine.Tree {
         return parent;
     }
     String type(Uri uri) throws IOException { try { String type = resolver.getType(uri); if (type == null) throw new IOException("无法读取文件类型"); return type; } catch (RuntimeException ex) { throw new IOException("目录授权失效", ex); } }
+    Uri any(String relative)throws IOException {String path=TransferEngine.path(relative),parent=DirectoryEngine.parent(path),name=DirectoryEngine.name(path);Map<String,Uri> entries=children(parent,directory(parent));for(Map.Entry<String,Uri> entry:entries.entrySet())if(entry.getKey().equalsIgnoreCase(name))return entry.getValue();return null;}
+    void refresh(){cache.clear();children.clear();cache.put("",DocumentsContract.buildDocumentUriUsingTree(tree,DocumentsContract.getTreeDocumentId(tree)));}
+    long size(Uri uri)throws IOException {try(Cursor cursor=resolver.query(uri,new String[]{DocumentsContract.Document.COLUMN_SIZE},null,null,null)){return cursor==null||!cursor.moveToFirst()||cursor.isNull(0)?-1:cursor.getLong(0);}catch(RuntimeException ex){throw new IOException("无法读取文件大小",ex);}}
+    Uri createTemporary(String relative)throws IOException {
+        String path=TransferEngine.path(relative),parent=DirectoryEngine.parent(path);refresh();if(any(path)!=null)throw new IOException("接收暂存名称已被占用");
+        try{Uri created=DocumentsContract.createDocument(resolver,directory(parent),mime(path),DirectoryEngine.name(path));if(created==null)throw new IOException("文件提供器拒绝创建接收暂存");return created;}
+        catch(RuntimeException ex){throw new IOException("目录授权失效或暂存创建被拒绝",ex);}finally{refresh();}
+    }
+    Uri renameNew(Uri source,String target)throws IOException {
+        target=TransferEngine.path(target);refresh();if(any(target)!=null)throw new IOException("发布前发现同名文件，暂存保留，请继续任务重新选择名称");
+        if((flags(source)&DocumentsContract.Document.FLAG_SUPPORTS_RENAME)==0)throw new IOException("文件提供器不支持重命名发布，.partial 暂存保留");
+        try{Uri renamed=DocumentsContract.renameDocument(resolver,source,DirectoryEngine.name(target));if(renamed==null)throw new IOException("文件提供器未完成重命名发布，.partial 暂存保留");return renamed;}
+        catch(RuntimeException ex){throw new IOException("重命名发布被文件提供器拒绝，暂存与记录保留",ex);}finally{refresh();}
+    }
     String displayName(Uri uri) throws IOException { try (Cursor cursor = resolver.query(uri, new String[] { DocumentsContract.Document.COLUMN_DISPLAY_NAME }, null, null, null)) { if (cursor == null || !cursor.moveToFirst()) throw new IOException("文件名读取失败"); return cursor.getString(0); } }
     static String mime(String name) { String lower = name.toLowerCase(Locale.ROOT); if (lower.endsWith(".md")) return "text/markdown"; if (lower.endsWith(".png")) return "image/png"; if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg"; if (lower.endsWith(".pdf")) return "application/pdf"; return "application/octet-stream"; }
     @Override public boolean exists(String path) throws IOException { return find(path, false, false) != null; }
@@ -74,7 +88,7 @@ final class DocumentStore implements DirectoryEngine.Tree {
             else {if(!DirectoryEngine.name(from).equals(DirectoryEngine.name(to)))throw new IOException("跨目录移动时请保持名称；移动后可再重命名");if((flags(source)&DocumentsContract.Document.FLAG_SUPPORTS_MOVE)==0)throw new IOException("系统不支持此项移动；不会复制后删除");moved=DocumentsContract.moveDocument(resolver,source,directory(DirectoryEngine.parent(from)),targetParent);}
             if(moved==null)throw new IOException("文件提供器未完成目录调整");
         }catch(RuntimeException ex){throw new IOException("目录调整被系统拒绝，请恢复目录记录后再试",ex);}
-        cache.clear();children.clear();cache.put("",DocumentsContract.buildDocumentUriUsingTree(tree,DocumentsContract.getTreeDocumentId(tree)));if(find(to,false,dir)==null||find(from,false,dir)!=null)throw new IOException("目录调整后的路径与预期不符，先恢复目录记录再同步");
+        refresh();if(find(to,false,dir)==null||find(from,false,dir)!=null)throw new IOException("目录调整后的路径与预期不符，先恢复目录记录再同步");
     }
 }
 

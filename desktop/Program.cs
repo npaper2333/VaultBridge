@@ -57,7 +57,7 @@ namespace VaultBridge {
             SuspendLayout();AutoScaleMode=AutoScaleMode.Dpi;previewMode=preview;Text="VaultBridge · 电脑主库";ClientSize=new Size(1120,850);MinimumSize=new Size(1000,780);StartPosition=FormStartPosition.CenterScreen;Font=new Font("Microsoft YaHei UI",10F);Icon=applicationIcon;
             if(preview)state=new Settings();else{store=new SettingsStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"VaultBridge"));try{state=store.Load();}catch(Exception){MessageBox.Show("无法读取已有设置。不会覆盖它，请检查 Windows 账户或设置备份。",Text,MessageBoxButtons.OK,MessageBoxIcon.Error);throw;}}
             if(preview&&initialStyle!=null)detectedAppearance=ObsidianAppearance.Parse(initialStyle=="dark"?"{\"theme\":\"obsidian\"}":"{\"theme\":\"moonstone\"}",false);
-            BuildLayout();
+            InitializeTransfers();BuildLayout();
             browse.Click+=SelectVault;refreshScopes.Click+=delegate{state.scopes=SelectedScopes().ToList();LoadScopes();};wholeVault.CheckedChanged+=delegate{scopes.Enabled=server==null&&!wholeVault.Checked;state.scopes=SelectedScopes().ToList();Save();};scopes.ItemCheck+=delegate{if(IsHandleCreated)BeginInvoke(new Action(delegate{if(!IsDisposed&&server==null){state.scopes=SelectedScopes().ToList();Save();}}));};addresses.SelectedIndexChanged+=delegate{UpdateQr();};
             copy.Click+=delegate{if(server!=null&&addresses.SelectedItem!=null){Clipboard.SetText(server.PairingText(addresses.SelectedItem.ToString()));Log("已复制配对文字，只提供给自己的平板。");}};
             renew.Click+=delegate{if(server!=null){server.RenewPairing();UpdateQr();}};start.Click+=ToggleServer;export.Click+=ExportZip;
@@ -98,10 +98,9 @@ namespace VaultBridge {
         void ToggleServer(object sender, EventArgs args) {
             if (server != null) { StopServer(); return; }
             try {
-                if (!Directory.Exists(state.vault)) throw new IOException("请先选择电脑笔记库");
-                string[] selected = SelectedScopes(); if (selected.Length == 0) throw new IOException("请至少勾选一项内容");
+                string[] selected = SelectedScopes(); if (Directory.Exists(state.vault)&&selected.Length == 0) throw new IOException("请至少勾选一项笔记范围");
                 state.scopes = selected.ToList(); Save();
-                server = new VaultServer(state, Save, Log); server.Start(false); UpdateQr(); Log("分享已启动，端口 " + server.Port + "。系统询问防火墙时，按实际网络选择允许。"); RefreshState();
+                server = new VaultServer(state, Save, Log);server.Transfers=transfers; server.Start(false); UpdateQr(); Log("分享已启动，端口 " + server.Port + "。系统询问防火墙时，按实际网络选择允许。"); RefreshState();
             } catch (Exception ex) { if (server != null) { server.Dispose(); server = null; } MessageBox.Show(this, ex.Message, "无法启动分享"); RefreshState(); }
         }
         void StopServer() { if (server != null) { server.Dispose(); server = null; Log("分享已停止"); } if (qr.Image != null) { qr.Image.Dispose(); qr.Image = null; } if(palette!=null)qr.BackColor=palette.Surface; RefreshState(); }

@@ -28,14 +28,14 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 Assert-TaskExit 'DEX compilation'
 & (Join-Path $taskBuildTools 'aapt2.exe') compile --dir $taskResources -o (Join-Path $taskBuild 'resources.zip')
 Assert-TaskExit 'resource compilation'
-& (Join-Path $taskBuildTools 'aapt2.exe') link -o (Join-Path $taskBuild 'base.apk') --manifest (Join-Path $taskBuild 'AndroidManifest.xml') -I (Join-Path $taskBuild 'android.jar') --min-sdk-version 26 --target-sdk-version 35 --version-code 5 --version-name 0.3.4 --auto-add-overlay (Join-Path $taskBuild 'resources.zip')
+& (Join-Path $taskBuildTools 'aapt2.exe') link -o (Join-Path $taskBuild 'base.apk') --manifest (Join-Path $taskBuild 'AndroidManifest.xml') -I (Join-Path $taskBuild 'android.jar') --min-sdk-version 26 --target-sdk-version 35 --version-code 6 --version-name 0.4.0 --auto-add-overlay (Join-Path $taskBuild 'resources.zip')
 Assert-TaskExit 'APK packaging'
 $taskArchive = [IO.Compression.ZipFile]::Open((Join-Path $taskBuild 'base.apk'), [IO.Compression.ZipArchiveMode]::Update)
 try { [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($taskArchive, (Join-Path $taskDex 'classes.dex'), 'classes.dex', [IO.Compression.CompressionLevel]::Optimal) | Out-Null } finally { $taskArchive.Dispose() }
 & (Join-Path $taskBuildTools 'zipalign.exe') -f -p 4 (Join-Path $taskBuild 'base.apk') (Join-Path $taskBuild 'aligned.apk')
 Assert-TaskExit 'alignment'
 if ($Unsigned) {
-    $taskApk = Join-Path $taskDist 'VaultBridge-Android-0.3.4-unsigned.apk'
+    $taskApk = Join-Path $taskDist 'VaultBridge-Android-0.4.0-unsigned.apk'
     Copy-Item -LiteralPath (Join-Path $taskBuild 'aligned.apk') -Destination $taskApk
 } else {
     $taskKey = Join-Path $taskRoot 'tools\vaultbridge-local-test.p12'
@@ -43,7 +43,7 @@ if ($Unsigned) {
     if (-not (Test-Path -LiteralPath $taskKey)) {
         throw 'Existing local test signing key missing. Use -Unsigned; do not generate or replace a signing key automatically.'
     }
-    $taskApk = Join-Path $taskDist 'VaultBridge-Android-0.3.4.apk'
+    $taskApk = Join-Path $taskDist 'VaultBridge-Android-0.4.0.apk'
     & $taskJava -jar (Join-Path $taskBuildTools 'lib\apksigner.jar') sign --ks $taskKey --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out $taskApk (Join-Path $taskBuild 'aligned.apk')
     Assert-TaskExit 'signing'
     & $taskJava -jar (Join-Path $taskBuildTools 'lib\apksigner.jar') verify --verbose $taskApk

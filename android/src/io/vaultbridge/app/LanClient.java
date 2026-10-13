@@ -9,6 +9,7 @@ import java.security.cert.*;
 import javax.net.ssl.*;
 
 final class LanClient {
+    static class RemoteError extends IOException {RemoteError(String message){super(message);}}
     static final int MAX_FRAME = 8 * 1024 * 1024;
     final String host, pin;
     final int port;
@@ -68,5 +69,5 @@ final class LanClient {
     }
     static void write(OutputStream stream, JSONObject object) throws IOException { byte[] bytes = object.toString().getBytes("UTF-8"); if (bytes.length == 0 || bytes.length > MAX_FRAME) throw new IOException("消息超过上限"); DataOutputStream data = new DataOutputStream(stream); data.writeInt(bytes.length); data.write(bytes); data.flush(); }
     static JSONObject read(InputStream stream) throws IOException { DataInputStream input = new DataInputStream(stream); int length = input.readInt(); if (length <= 0 || length > MAX_FRAME) throw new IOException("消息长度无效"); byte[] bytes = new byte[length]; input.readFully(bytes); try { return new JSONObject(new String(bytes, "UTF-8")); } catch (JSONException ex) { throw new IOException("消息格式无效", ex); } }
-    static JSONObject checked(JSONObject response) throws IOException { if (!response.optBoolean("ok", false)) throw new IOException(response.optString("error", "电脑拒绝请求")); return response; }
+    static JSONObject checked(JSONObject response) throws IOException { if (!response.optBoolean("ok", false)) throw new RemoteError(response.optString("error", "电脑拒绝请求")); return response; }
 }
