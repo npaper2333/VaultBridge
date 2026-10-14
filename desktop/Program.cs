@@ -71,7 +71,7 @@ namespace VaultBridge {
             AutoScaleDimensions=new SizeF(96F,96F);ResumeLayout(true);
         }
         protected override void Dispose(bool disposing) {
-            if(disposing){timer.Stop();tray.Dispose();}
+            if(disposing){StopUpdateWork();timer.Stop();tray.Dispose();}
             base.Dispose(disposing);
             if(disposing){applicationIcon.Dispose();trayIcon.Dispose();timer.Dispose();}
         }

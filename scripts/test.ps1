@@ -3,13 +3,23 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskReport = Join-Path $taskRoot ('work\validation-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-$taskExe = Join-Path $taskRoot 'dist\VaultBridge-Desktop-0.4.0.exe'
+$taskExe = Join-Path $taskRoot 'dist\VaultBridge-Desktop-0.4.2.exe'
 $taskJdk = (Get-ChildItem -LiteralPath (Join-Path $taskRoot 'tools') -Directory | Where-Object Name -Like 'jdk-17*' | Select-Object -First 1).FullName
 $taskZxing = Join-Path $taskRoot 'tools\downloads\zxing-core-3.5.3.jar'
 $taskJson = Join-Path $taskRoot 'tools\downloads\json-20240303.jar'
 $taskClasses = Join-Path $taskReport 'classes'
 New-Item -ItemType Directory -Path $taskClasses -Force | Out-Null
-& (Join-Path $taskJdk 'bin\javac.exe') '-J-Dfile.encoding=UTF-8' -encoding UTF-8 --release 8 -classpath ($taskZxing + ';' + $taskJson) -d $taskClasses (Join-Path $taskRoot 'android\src\io\vaultbridge\app\Engine.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\LanClient.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\PathState.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\DirectoryEngine.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\LocationState.java') (Join-Path $taskRoot 'tests\DirectoryTest.java') (Join-Path $taskRoot 'tests\EngineTest.java') (Join-Path $taskRoot 'tests\Base64.java') (Join-Path $taskRoot 'tests\LanInteropTest.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\AppearanceConfig.java') (Join-Path $taskRoot 'tests\AppearanceTest.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\TransferEngine.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\TransferClient.java') (Join-Path $taskRoot 'android\src\io\vaultbridge\app\TransferLanding.java') (Join-Path $taskRoot 'tests\TransferTest.java') (Join-Path $taskRoot 'tests\TransferLandingTest.java')
+$taskJavaSources = @(
+    'android/src/io/vaultbridge/app/Engine.java', 'android/src/io/vaultbridge/app/LanClient.java',
+    'android/src/io/vaultbridge/app/PathState.java', 'android/src/io/vaultbridge/app/DirectoryEngine.java',
+    'android/src/io/vaultbridge/app/LocationState.java', 'android/src/io/vaultbridge/app/AppearanceConfig.java',
+    'android/src/io/vaultbridge/app/TransferEngine.java', 'android/src/io/vaultbridge/app/TransferClient.java',
+    'android/src/io/vaultbridge/app/TransferLanding.java',
+    'android/src/io/vaultbridge/app/UpdateInfo.java', 'android/src/io/vaultbridge/app/UpdateClient.java',
+    'tests/DirectoryTest.java', 'tests/EngineTest.java', 'tests/Base64.java', 'tests/LanInteropTest.java',
+    'tests/AppearanceTest.java', 'tests/TransferTest.java', 'tests/TransferLandingTest.java', 'tests/UpdateTest.java'
+) | ForEach-Object { Join-Path $taskRoot $_ }
+& (Join-Path $taskJdk 'bin\javac.exe') '-J-Dfile.encoding=UTF-8' -encoding UTF-8 --release 8 -classpath ($taskZxing + ';' + $taskJson) -d $taskClasses $taskJavaSources
 if ($LASTEXITCODE -ne 0) { throw 'Java test compilation failed.' }
 $taskClasspath = $taskClasses + ';' + $taskZxing + ';' + $taskJson
 # Starts only a hidden self-test against a new loopback listener and isolated generated notes.
@@ -25,6 +35,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Directory tests failed.' }
 
 & (Join-Path $taskJdk 'bin\java.exe') -Xmx768m -cp $taskClasspath io.vaultbridge.app.TransferLandingTest $taskReport | Tee-Object -FilePath (Join-Path $taskReport 'android-transfer-landing-results.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Android safe transfer landing checks failed.' }
+
+& (Join-Path $taskJdk 'bin\java.exe') -cp $taskClasspath io.vaultbridge.app.UpdateTest $taskReport | Tee-Object -FilePath (Join-Path $taskReport 'android-update-results.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Android update metadata and download checks failed.' }
 
 if (-not $SkipDesktopUi) {
     $taskUiProcess = Start-Process -FilePath $taskExe -ArgumentList @('--ui-test', ('"' + $taskReport + '"')) -WindowStyle Hidden -Wait -PassThru

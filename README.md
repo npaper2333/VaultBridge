@@ -4,20 +4,20 @@
 
 把 Windows 电脑上的 Obsidian 笔记按需送到 Android 平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，平板接收副本。
 
-**免费、无云端、MIT 开源。当前版本为 0.4.0 预发布。** 新版增加普通文件双向互传、分块续传与手动笔记回传。Huawei MatePad Air 12 / HarmonyOS 4.2 的安装、触控、微信入口和目录授权仍需真机验收。
+**免费、无云端、MIT 开源。当前版本为 0.4.2 预发布。** 新版增加应用内检查更新、校验下载与用户确认安装/切换，并包含手机称呼修正；普通文件互传、分块续传和手动笔记回传继续保留。Huawei MatePad Air 12 / HarmonyOS 4.2 的系统安装、触控、微信入口和目录授权仍需真机验收。
 
-[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.0) · [快速上手](docs/quick-start.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
+[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.2) · [快速上手](docs/quick-start.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
 ## 下载与兼容性
 
 | 平台/文件 | 用途 |
 | --- | --- |
-| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-Desktop-0.4.0-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
-| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-Android-0.4.0.apk) | Android 8.0 / API 26 起，目标 API 35；当前面向 MatePad Air 12 / HarmonyOS 4.2。已有官方测试版直接覆盖安装，不要先卸载。 |
-| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/VaultBridge-0.4.0-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
-| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/SHA256SUMS.txt) | 核对以上三个 Release 资产的 SHA-256。 |
+| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-Desktop-0.4.2-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
+| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-Android-0.4.2.apk) | Android 8.0 / API 26 起，目标 API 35；手机/平板共用，Android 版本码 8。已有官方测试版直接覆盖安装，不要先卸载。 |
+| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-0.4.2-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
+| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/SHA256SUMS.txt) | 核对以上三个 Release 资产的 SHA-256。 |
 
-两端一起更新后使用新增传输功能；[0.3.4 历史预发布](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4)保留。
+**应用内更新入口从 0.4.2 起提供，旧 0.4.0 / Android 0.4.1 需先手动安装一次本版。** 两端一起更新；[0.4.0](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.0)与 [0.3.4](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4)历史预发布保留，0.4.1 文案修正并入 0.4.2。
 
 APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源码仓库不含签名私钥、SDK/JDK、安装包或笔记；安装包放在 Releases。自行构建的 APK 需用自己的密钥签名，通常不能覆盖官方签名版本。Obsidian 与微信需自行安装，本项目不是它们的官方产品。
 
@@ -34,13 +34,14 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 | 普通文件互传（0.4.0） | 独立接收目录，选择文件或文件夹，两端手动互传；ZIP 原样保存，同名变化另存，电脑接收逐批确认。 |
 | 大文件与续传（0.4.0） | 8 GiB 单文件、4 MiB 分块、暂停/继续、持久任务队列，网络故障有限退避后只补缺失块。 |
 | 平板笔记回传（0.4.0） | 平板主动勾选笔记/附件，默认电脑主库根目录，也可填库内子目录；电脑确认，同名变化另存。 |
+| 应用更新（0.4.2） | 启动后台检查可关闭，显示新版本说明；点击才下载并校验。Android 交系统确认安装，Windows 点击切换后停止分享，旧文件和设置保留。 |
 
 不自动回写电脑，不传播删除，不建设云服务。0.4.0 的手动回传与常规主库同步分开，见 [普通文件与笔记回传](docs/file-transfer.md)。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
 
 ## 五步开始
 
-1. 完整解压 Windows 0.4.0 包，打开 `VaultBridge-Desktop-0.4.0.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
-2. 把 `VaultBridge-Android-0.4.0.apk` 发送到平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
+1. 完整解压 Windows 0.4.2 包，打开 `VaultBridge-Desktop-0.4.2.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
+2. 把 `VaultBridge-Android-0.4.2.apk` 发送到手机/平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
 3. 平板打开 VaultBridge，选择目标文件夹；在 Obsidian 中使用同一个文件夹。建议首次使用临时测试库。
 4. 两端连接同一局域网，平板扫码电脑二维码，或粘贴电脑端复制的配对文字。
 5. 平板“选择笔记并同步”；以后用“同步上次范围”。电脑窗口关闭后静默留在托盘，右键“退出”完全停止。
@@ -58,6 +59,7 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 - 隐藏目录、`.obsidian`、符号链接不分享/导入。选择部分笔记时，跨目录图片与附件须一并选择；不自动补齐全部链接依赖。
 - ZIP 最大 512 MiB，解压总量 1 GiB，单文件 256 MiB，最多 20,000 条目；不支持加密、分卷或 ZIP64。0.4.0 普通文件单个最多 8 GiB/每批 64 GiB；常规笔记获取与普通互传均支持分块续传，两端都需更新。
 - 当前不含云同步、自动发现、路由器/VPN 配置或开机启动；异地地址仅在用户自行具备可达网络时使用。
+- 应用检查更新需要访问公开 GitHub，不发送笔记、目录、配对凭据或设备名；断网仍可使用原有本机/局域网功能。详情见 [应用更新](docs/updates.md)。
 - 卸载会失去应用私有配对和记录。更新请覆盖安装；操作真实库前先完成临时库验收。
 
 ## 开发与验证

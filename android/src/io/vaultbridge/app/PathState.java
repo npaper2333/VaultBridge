@@ -41,7 +41,7 @@ class PathState implements Engine.Ledger {
     }
     Map<String,String> targets(Collection<String> originals) throws IOException {
         Map<String,String> result=new LinkedHashMap<>();Set<String> unique=new HashSet<>();
-        for(String p:originals){String t=target(p);if(!unique.add(t.toLowerCase(Locale.ROOT)))throw new IOException("多个来源指向同一平板位置："+t+"。先调整目录对应。");result.put(p,t);}return result;
+        for(String p:originals){String t=target(p);if(!unique.add(t.toLowerCase(Locale.ROOT)))throw new IOException("多个来源指向同一接收位置："+t+"。先调整目录对应。");result.put(p,t);}return result;
     }
     @Override public String baseline(String source,String path){return state.optJSONObject("baselines").optString(source+"|"+path,null);}
     @Override public void baseline(String source,String path,String hash) throws IOException {if(Objects.equals(baseline(source,path),hash))return;JSONObject n=copy();try{n.getJSONObject("baselines").put(source+"|"+path,hash);commit(n);}catch(JSONException ex){throw new IOException(ex);} }

@@ -1,4 +1,34 @@
-# 0.4.0 验证状态
+# 验证状态
+
+## 0.4.2 应用内更新与称呼适配
+
+版本日期：2026-10-14。两端 0.4.2、Android 版本码 8；0.4.1 本地文案修正并入本版，不单独发布 Release。Windows 与 Android 本机构建通过，当前自动回归结果如下，不沿用历史版本的结果或文件哈希充当本版验证。
+
+| 检查 | 结果和边界 |
+| --- | --- |
+| Windows 核心、传输与更新 | 137 项通过：原核心与传输 74 项，新增更新规则 63 项。 |
+| 实际 Java 传输 / 原有 TLS | 29 / 5 项通过，使用生成文件与 Windows 回环服务。 |
+| Android 核心 / 目录 / SAF 发布 | 37 / 39 / 28 项通过；SAF 为模拟文件提供器，不代替真实目录授权与操作。 |
+| Android 更新 | 60 项通过，纯 Java 更新规则与客户端使用合成数据检查，不启动真实安装器。 |
+| Android 外观解析 / UiTheme | 21 / 28 项通过，配色代码检查不代替原生显示与触摸验收。 |
+| APK 构建与签名 | Android SDK 编译、DEX、资源、对齐及签名验证通过，版本 0.4.2 / 版本码 8；证书与旧版一致。 |
+| Windows 原生 UI | 126 项通过，含更新提示、顶部布局及五档 DPI 深浅色边界检查。本机实际 175% DPI，其他比例为模拟；不代替实际跨显示器或触控验收。 |
+
+更新回归覆盖数字版本和 Release/平台资产筛选、URL/重定向边界、GitHub digest 缺失/错误、大小与下载校验、Windows ZIP 路径/限额及 EXE/config 完整性等规则。Android 原生更新 UI/Provider 通过 SDK 编译，安装身份核对和真实系统交互仍需设备验收；预览/自测不自动访问 GitHub。
+
+0.4.2 APK 签名证书 SHA-256：`c73736bc5a97a8030b597c004b494613ef221b86bb9a9ec228a71550e3837be7`，已核对与旧版一致。分发资产哈希见 [v0.4.2 SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/SHA256SUMS.txt)。
+
+旧 0.4.0 / Android 0.4.1 需手动安装一次本版，之后才有应用内更新入口。实际手机系统安装、HarmonyOS 来源权限、Windows 运行中停止分享并切换、SAF/微信/扫码和目标平板显示仍待人工验收。说明见 [updates.md](updates.md)、[release-v0.4.2.md](release-v0.4.2.md)与 [acceptance.md](acceptance.md)。
+
+## Android 0.4.1 本地称呼修正
+
+2026-10-14：手机/平板静态称呼按完整屏幕短边 dp 判断，布局与传输规则不变。Native SDK 构建、DEX/资源/对齐、Manifest 0.4.1/版本码 7、v2/v3 签名通过；证书与旧版一致。原 0.4.0 APK 和桌面字节未变，0.4.1 未单独公开发布，后续合入 0.4.2。
+
+`scripts/test.ps1 -SkipDesktopUi` 通过：Windows 核心 74、实际 Java 传输 29、原 TLS 5、Android 核心 37、目录状态 39、SAF 发布模拟 28、外观解析 21、UiTheme 28。用户截图反馈旧版手机主屏 UI 正常；新版称呼及完整手机/平板行为仍待安装后确认。
+
+APK SHA-256：`748cdf5a868e67608219f915ef975170c8ab55afc55b9b9a0b358f258fbb4d56`。
+
+## 0.4.0 已公开预发布
 
 构建与回归日期：2026-10-12；预发布日期：2026-10-13。0.4.0 为预发布版本，已完成本机 Windows/Android 编译与以下自动回归。三个 Release 资产的 SHA-256 见 [v0.4.0 校验文件](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.0/SHA256SUMS.txt)；0.3.4 的历史记录保留在下文。
 

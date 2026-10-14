@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
     AppLayout layout;
     LibraryUi libraryUi;
     TransferUi transferUi;
+    UpdateUi updateUi;
     final ExecutorService worker = Executors.newSingleThreadExecutor();
     final List<View> actions = new ArrayList<>();
     final List<TextView> helpViews = new ArrayList<>();
@@ -55,7 +56,7 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         if(state!=null)currentPage=state.getInt("page",0);
         try {libraryUi=new LibraryUi(this);} catch(IOException ex){dialog().setTitle("库记录无法读取").setMessage(ex.getMessage()+"。已有笔记未变动；本次停止操作。").setPositiveButton("关闭",(d,w)->finish()).show();return;}
-        transferUi=new TransferUi(this);rebuildUi();receiveIntent(getIntent());
+        transferUi=new TransferUi(this);updateUi=new UpdateUi(this);rebuildUi();receiveIntent(getIntent());updateUi.start();
     }
     void rebuildUi() {
         if(busy){rebuildAfterWork=true;return;}
@@ -71,10 +72,14 @@ public class MainActivity extends Activity {
         worker.submit(()->{final AppearanceConfig next=AppearanceReader.read(getContentResolver(),location,dark);runOnUiThread(()->{if(destroyed||request!=appearanceRequest||!location.equals(prefs.getString("tree","")))return;if(busy){appearanceAfterWork=true;return;}if(!next.key().equals(appearanceConfig.key())){preserveAppearanceInput();appearanceConfig=next;rebuildUi();}});});
     }
     void resetAppearanceForVault(){appearanceRequest++;appearanceConfig=AppearanceConfig.fallback(systemDark(),"正在检测当前库外观");rebuildUi();refreshAppearance();}
-    @Override protected void onResume(){super.onResume();refreshAppearance();}
+    @Override protected void onResume(){super.onResume();refreshAppearance();if(updateUi!=null)updateUi.resume();}
     @Override public void onConfigurationChanged(android.content.res.Configuration config){super.onConfigurationChanged(config);if(libraryUi!=null){preserveAppearanceInput();rebuildUi();refreshAppearance();}}
     @Override protected void onSaveInstanceState(Bundle out){out.putInt("page",currentPage);super.onSaveInstanceState(out);}
     int dp(int value) {return Math.round(value*getResources().getDisplayMetrics().density);}
+    String deviceName() {
+        if(Build.VERSION.SDK_INT>=30){android.graphics.Rect bounds=getWindowManager().getMaximumWindowMetrics().getBounds();return DeviceText.name(Math.round(Math.min(bounds.width(),bounds.height())/getResources().getDisplayMetrics().density));}
+        android.util.DisplayMetrics metrics=new android.util.DisplayMetrics();getWindowManager().getDefaultDisplay().getRealMetrics(metrics);return DeviceText.name(Math.round(Math.min(metrics.widthPixels,metrics.heightPixels)/metrics.density));
+    }
     TextView text(String value,int size,boolean bold){TextView v=new TextView(this);v.setText(value);v.setTextSize(size);v.setTextColor(ink);if(bold)v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);v.setPadding(0,dp(4),0,dp(7));return v;}
     void explain(LinearLayout parent,String value){TextView v=text(value,12,false);v.setTextColor(theme.muted);v.setVisibility(prefs.getBoolean("showHelp",true)?View.VISIBLE:View.GONE);parent.addView(v);helpViews.add(v);}
     void notice(LinearLayout parent,String value){TextView v=text(value,12,false);v.setTextColor(theme.muted);v.setPadding(0,dp(9),0,dp(7));parent.addView(v);}
@@ -100,7 +105,7 @@ public class MainActivity extends Activity {
     void updateLabels() { String tree = prefs.getString("tree", ""); targetLabel.setText(tree.isEmpty() ? "尚未选择目标目录" : "目标：" + LibraryUi.label(tree) + "\n" + Uri.decode(tree.substring(tree.lastIndexOf('/') + 1))); String host = prefs.getString("host", ""); computerLabel.setText(host.isEmpty() ? "尚未配对电脑" : "电脑：" + prefs.getString("computerName", host) + "  ·  " + host + "\n主库：" + prefs.getString("vaultName", "")); }
     void log(String value) { runOnUiThread(() -> { if (!destroyed) message.setText(value); }); }
     void alert(String value) { if (!destroyed) dialog().setTitle("VaultBridge").setMessage(value).setPositiveButton("知道了", null).show(); }
-    boolean requireTarget() { if (prefs.getString("tree", "").isEmpty()) { alert("先选择平板上的 Obsidian 库目录。"); return false; } return true; }
+    boolean requireTarget() { if (prefs.getString("tree", "").isEmpty()) { alert("先选择"+deviceName()+"上的 Obsidian 库目录。"); return false; } return true; }
     DocumentStore store() { return new DocumentStore(getContentResolver(), Uri.parse(prefs.getString("tree", ""))); }
     AndroidLedger ledger() throws IOException { return new AndroidLedger(prefs, prefs.getString("tree", "")); }
     LanClient client() throws IOException { if (prefs.getString("token", "").isEmpty()) throw new IOException("先扫码或粘贴文字配对电脑"); return new LanClient(prefs.getString("host", ""), prefs.getInt("port", 27183), prefs.getString("pin", ""), prefs.getString("token", "")); }
@@ -169,7 +174,7 @@ public class MainActivity extends Activity {
     void syncPaths(Set<String> selection, String kind, JSONArray savedSelection) {
         if (selection.isEmpty()) { alert("至少选择一篇笔记或一个附件。"); return; }
         JSONObject snapshot = manifest;
-        runWork("正在比较平板和电脑的内容…", () -> {
+        runWork("正在比较"+deviceName()+"和电脑的内容…", () -> {
             DocumentStore destination = store(); AndroidLedger records = ledger(); records.requireReady(); LanClient connection = client(); String source = "pc:" + snapshot.getString("vaultId"), batch = Engine.batchId(); File temp = work("sync"); int[] counts = new int[4]; int failed = 0, done = 0; List<String> errors = new ArrayList<>();
             TransferClient resumable=new TransferClient(connection,this::log);transferUi.active=resumable;
             JSONArray files = snapshot.getJSONArray("files"); Set<String> available = new HashSet<>(); for (int i = 0; i < files.length(); i++) available.add(files.getJSONObject(i).getString("path")); List<String> selectedScopes = new ArrayList<>(); for (int i = 0; i < savedSelection.length(); i++) selectedScopes.add(savedSelection.getString(i)); Set<String> missing = kind.equals("scopes") ? Engine.selectScopes(records.managedPaths(source), selectedScopes) : new HashSet<>(selection); missing.removeAll(available);
@@ -189,7 +194,7 @@ public class MainActivity extends Activity {
             transferUi.active=null;
             prefs.edit().putString("lastSelection", savedSelection.toString()).putString("lastSelectionKind", kind).commit();
             String summary = summary("同步", counts, failed) + (errors.isEmpty() ? "" : "\n" + String.join("\n", errors.subList(0, Math.min(8, errors.size()))));
-            if (!missing.isEmpty()) summary += "\n上次范围有 " + missing.size() + " 个文件目前未提供（可能已删除或分享范围变化），平板原文件保留。";
+            if (!missing.isEmpty()) summary += "\n上次范围有 " + missing.size() + " 个文件目前未提供（可能已删除或分享范围变化），"+deviceName()+"原文件保留。";
             JSONArray warnings = snapshot.optJSONArray("warnings"); if (warnings != null && warnings.length() > 0) summary += "\n电脑有 " + warnings.length() + " 个未提供文件或目录，请查看电脑分享范围。";
             if(!linkWarnings.isEmpty())summary+="\n有 "+linkWarnings.size()+" 条引用需要检查：\n"+String.join("\n",linkWarnings.subList(0,Math.min(5,linkWarnings.size())));
             result(summary);
@@ -206,9 +211,9 @@ public class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); setIntent(intent); receiveIntent(intent); }
     void receiveIntent(Intent intent) {
         if(intent==null||layout==null||libraryUi==null)return;
-        if(Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())){ArrayList<Uri> uris=intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);if(uris!=null)transferUi.shared(uris);return;}
+        if(Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())){ArrayList<Uri> uris=intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);if(uris!=null){for(Uri uri:uris)if(UpdateProvider.own(uri))return;transferUi.shared(uris);}return;}
         Uri uri=null;if(Intent.ACTION_SEND.equals(intent.getAction()))uri=intent.getParcelableExtra(Intent.EXTRA_STREAM);else if(Intent.ACTION_VIEW.equals(intent.getAction()))uri=intent.getData();
-        if(uri!=null){if(!"content".equals(uri.getScheme())){alert("通过系统文件选择或分享可访问的文件。");return;}String name=displayName(uri);if(name.toLowerCase(Locale.ROOT).endsWith(".zip")){final Uri selected=uri;dialog().setTitle("收到 ZIP").setItems(new String[]{"导入 Obsidian 库（按原导入规则）","作为普通文件发送给电脑（不解压）"},(d,w)->{if(w==0)acceptZip(selected,true);else transferUi.shared(Collections.singletonList(selected));}).show();}else transferUi.shared(Collections.singletonList(uri));}
+        if(uri!=null){if(UpdateProvider.own(uri))return;if(!"content".equals(uri.getScheme())){alert("通过系统文件选择或分享可访问的文件。");return;}String name=displayName(uri);if(name.toLowerCase(Locale.ROOT).endsWith(".zip")){final Uri selected=uri;dialog().setTitle("收到 ZIP").setItems(new String[]{"导入 Obsidian 库（按原导入规则）","作为普通文件发送给电脑（不解压）"},(d,w)->{if(w==0)acceptZip(selected,true);else transferUi.shared(Collections.singletonList(selected));}).show();}else transferUi.shared(Collections.singletonList(uri));}
     }
     void acceptZip(Uri uri, boolean external) {
         if (!"content".equals(uri.getScheme())) { alert("需要通过系统文件选择器或其他应用分享 ZIP。"); return; }
@@ -260,11 +265,11 @@ public class MainActivity extends Activity {
     void restoreHistory(Engine.History item) { runWork("备份当前笔记并恢复所选版本…", () -> { DocumentStore destination = store(); ledger().requireReady(); File temporary = new File(work("restore"), "version"); try (InputStream input = destination.read(item.storedPath); OutputStream output = new FileOutputStream(temporary)) { Engine.copy(input, output, Engine.MAX_FILE); } if (!item.hash.equals(Engine.hash(temporary))) throw new IOException("备份内容校验失败，已取消恢复"); String source = item.type.equals("conflict") ? item.source : "restore:" + Engine.batchId(); Engine.apply(destination, ledger(), new Engine.Item(item.path, item.hash, temporary.length(), temporary), item.path, source, Engine.batchId(), true); result("已恢复：" + item.path + "\n恢复前的内容也已保留在版本记录中。"); }); }
     void openObsidian() { Intent intent = getPackageManager().getLaunchIntentForPackage("md.obsidian"); if (intent == null) alert("未找到可启动的 Obsidian。请从桌面打开；笔记已保存在所选目录。"); else startActivity(intent); }
     @Override protected void onActivityResult(int request, int result, Intent data) {
-        super.onActivityResult(request, result, data); if (result != RESULT_OK || data == null) return;
+        super.onActivityResult(request, result, data);if(updateUi!=null&&updateUi.result(request,result))return; if (result != RESULT_OK || data == null) return;
         if(transferUi!=null&&transferUi.result(request,data))return;
         if(request==TREE&&data.getData()!=null){boolean first=prefs.getString("tree","").isEmpty();Uri uri=data.getData();int flags=data.getFlags()&(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);try{libraryUi.accepted(uri,flags);updateLabels();if(first&&pendingZip!=null&&automatic.isChecked()&&!busy&&!prefs.getString("tree","").isEmpty())importZip(false);}catch(Exception ex){alert("目录授权未完成："+ex.getMessage());}}
         else if (request == ZIP && data.getData() != null) acceptZip(data.getData(), false);
         else if (request == SCAN) pair(data.getStringExtra("pairing"));
     }
-    @Override protected void onDestroy() { if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() {if(updateUi!=null)updateUi.close(); if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
 }

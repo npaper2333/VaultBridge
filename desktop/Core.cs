@@ -57,6 +57,7 @@ namespace VaultBridge {
     public class Settings {
         public string style = "lake";
         public bool showHelp = true;
+        public bool checkUpdatesOnStart = true;
         public string vault = "";
         public int port = 27183;
         public string vaultId = Guid.NewGuid().ToString("N");
