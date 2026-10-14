@@ -4,6 +4,8 @@
 
 把 Windows 电脑上的 Obsidian 笔记按需送到 Android 手机或平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，Android 端接收副本。
 
+**局域网直传，文件内容原样保真。** 普通文件按原始字节传输，应用不对图片、音视频做有损压缩或转码，并用 SHA-256 校验内容完整性。笔记同步及 ZIP 导入可能按目录映射修正 Markdown 链接，详见 [传输保真说明](docs/file-transfer.md#原文件保真与完整性)。
+
 **免费、无云端、MIT 开源。当前版本为 Android 0.4.3 / Windows 0.4.2 预发布。** Android 新增最近接收/查看、搜索筛选和离线只读预览；应用内更新、普通文件互传、分块续传和手动笔记回传继续保留。
 
 [下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.3) · [快速上手](docs/quick-start.md) · [接收文件与预览](docs/file-library.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
