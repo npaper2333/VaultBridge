@@ -10,6 +10,8 @@
 
 [下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.3) · [快速上手](docs/quick-start.md) · [接收文件与预览](docs/file-library.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
+使用中遇到问题或有建议，欢迎添加作者微信：**`nitro1447`**（备注“VaultBridge 反馈”），也可通过 [GitHub Issues](https://github.com/npaper2333/VaultBridge/issues) 反馈。
+
 ## 下载与兼容性
 
 **适用于 Android 8.0（API 26）及以上的手机和平板；鸿蒙设备需支持安装 Android APK。** 最低版本要求不代表所有机型已经实测；实际安装、目录提供器和系统限制可能因设备而异。
