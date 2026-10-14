@@ -2,7 +2,7 @@
 
 本项目为免费、无云端的 Windows 主库 → Android 副本工作流，采用 MIT；第三方组件保留原许可。
 
-当前版本为 Windows/Android 0.4.2（Android 版本码 8），以 `v0.4.2` 预发布发行；0.4.1 文案修正并入此版，历史构建与 Release 保留。作者署名为 Nitro，仓库为 `npaper2333/VaultBridge`。
+当前版本为 Android 0.4.3（版本码 9）/ Windows 0.4.2。`v0.4.3` 仅发布 Android 新包，不提供 Desktop 0.4.3；Windows 保留原代码和产物，更新器跳过缺少对应平台资产的 Release。历史构建与 Release 保留，作者署名 Nitro，仓库为 `npaper2333/VaultBridge`。
 
 ## 目录与边界
 
@@ -10,7 +10,8 @@
 - `scripts/`：英文短横线命名的本地构建、测试和打包脚本；`tests/`：自建数据的测试源码。
 - `docs/`：中文协议/使用/构建/验收说明；`licenses/`：原始第三方许可与 NOTICE。
 - `tools/`、`work/`、`dist/`：本机构建依赖、临时数据/报告、产物，不提交。新文件用英文 ASCII 名，文本 UTF-8。
-- 打包使用新的 `work/packaging-<version>-<timestamp>/` 暂存当前版本的指南、MIT/第三方许可证和校验文件，再生成 `dist/` 内带版本和时间戳的 ZIP。版本化指南与校验文件另存 `dist/`；不重写旧版本使用的公共文件或清理历史内容。
+- 分发目录采用 `dist/<major.minor>/<完整版本>/`，例如 Android 0.4.3 在 `dist/0.4/0.4.3/`，Windows 0.4.2 在 `dist/0.4/0.4.2/`；同版程序、配置、指南、压缩包和校验文件放在一起。混合总包归当前较新 Android 版本目录，名称标清双方版本。无法可靠归版的旧公共文件在 `dist/shared/`，不猜测版本或删除；目录根只保留索引说明和版本族。
+- 打包使用新的 `work/packaging-<platform-versions>-<timestamp>/` 暂存指南、MIT/第三方许可证和校验文件，再生成各版本分发目录内带时间戳的 ZIP。指南和校验文件也带平台版本与时间戳，不重写旧版共用文件。`-AndroidOnly` 仅写 Android 0.4.3 目录；默认总包和 Android 包在 0.4.3、Desktop 包在 0.4.2，明确双方版本。
 - 新目录和流程先约定用途再实现。不要上传真实笔记、配对文字/二维码、令牌、签名私钥或本机日志。
 
 ## 功能纪律
@@ -22,6 +23,8 @@
 - 目录移动使用系统声明能力，先预览并记录中断状态，不以复制后删除替代；状态模糊时停止写入。复制到空库时原库保留。
 - UI 固定晴湖布局：中性深浅大背景、真实适度圆角、少量主要操作强调色、原生清晰文字。原生白底之后覆盖着色不能作为快速滚动修复。
 - 不自动生成发行密钥，公开构建使用 `build-android.ps1 -Unsigned`。发布 APK 由维护者用私有材料签名并验证，密钥不进源码/日志。
+- Android“文件”页仅索引本应用普通接收完成项，排除发送来源、Obsidian 同步和 `.partial`。索引/查看记录在私有 `files/received/`，预览副本在 `cache/previews/`；不扫描整个存储、不写原文件、不自动删除。旧任务只在原授权位置核对最终文件后回填；索引失败不能反转传输结果。
+- 图片/PDF/文本及 Markdown 只读预览不使用 WebView、不执行脚本或网络内容，并限制文件、像素与页数；Office/压缩包等交其他应用只读打开，排除 VaultBridge 自身以免导入循环。不授予写权限，真实 SAF、手势、渲染和应用选择器仍需设备验收。
 - 应用更新仅访问固定公开 GitHub 仓库的 HTTPS Release API 和允许的官方资产主机，不带 token，不发送笔记、目录、配对或设备名。按数字版本、对应平台精确文件名和 SHA-256 digest 选择资产；缺少 digest 时只提供发布页，不直接下载。
 - 更新下载、缓存和解包只使用本应用私有更新目录，不自动清理。Android 校验 APK 身份/版本/签名后交系统确认安装；Windows 安全限量解包，用户明确点击切换才停止分享并启动新版，旧文件与设置保留。不静默安装、不覆盖运行中的 EXE、不修改系统配置。
 
@@ -33,4 +36,4 @@
 
 发布前核对干净源码文件、凭据排除、文档链接、签名与安装包哈希；安装包放 Releases，源码库不包含工具或构建目录。真机未验收时标为预发布，不能把构建/自动回归写成目标设备通过。
 
-0.4.2 Release 资产固定命名为 `VaultBridge-Desktop-0.4.2-portable.zip`、`VaultBridge-Android-0.4.2.apk`、`VaultBridge-0.4.2-local.zip` 和 `SHA256SUMS.txt`；校验文件包含前三个资产的哈希，ZIP 保留 MIT 与第三方许可证及使用说明，Windows 包必须带同名 `.exe.config`。不得修改系统/全局配置或删除用户内容来解决构建问题。
+0.4.3 Release 资产为 `VaultBridge-Android-0.4.3.apk`、`VaultBridge-Android-0.4.3-local.zip` 与 `SHA256SUMS.txt`；校验文件包含前两个资产哈希。Windows 下载继续指向 v0.4.2，不能改名冒充 Desktop 0.4.3。ZIP 保留 MIT、第三方许可证、使用/验收/更新和文件库说明，含 Windows 的本地总包须带原 0.4.2 EXE 的同名 `.exe.config`。不得修改系统/全局配置或删除用户内容来解决构建问题。

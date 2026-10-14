@@ -1,11 +1,11 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.vaultbridge.app" android:versionCode="8" android:versionName="0.4.2">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.vaultbridge.app" android:versionCode="9" android:versionName="0.4.3">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <queries><package android:name="md.obsidian" /></queries>
+    <queries><package android:name="md.obsidian" /><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="content" android:mimeType="*/*" /></intent></queries>
     <application android:label="VaultBridge" android:theme="@style/VaultBridgeLight" android:icon="@drawable/ic_launcher" android:allowBackup="false" android:supportsRtl="true" android:usesCleartextTraffic="false">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|uiMode" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
@@ -13,6 +13,7 @@
             <intent-filter><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="content" android:mimeType="*/*" /></intent-filter>
         </activity>
         <activity android:name=".ScanActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".PreviewActivity" android:exported="false" />
         <provider android:name=".UpdateProvider" android:authorities="io.vaultbridge.app.updates" android:exported="false" android:grantUriPermissions="true" />
     </application>
 </manifest>

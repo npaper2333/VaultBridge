@@ -4,26 +4,28 @@
 
 把 Windows 电脑上的 Obsidian 笔记按需送到 Android 手机或平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，Android 端接收副本。
 
-**适用于 Android 8.0 及以上的手机和平板；鸿蒙设备需支持安装 Android APK。** 手机和平板使用同一个 APK。
+**免费、无云端、MIT 开源。当前版本为 Android 0.4.3 / Windows 0.4.2 预发布。** Android 新增最近接收/查看、搜索筛选和离线只读预览；应用内更新、普通文件互传、分块续传和手动笔记回传继续保留。
 
-**免费、无云端、MIT 开源。当前版本为 0.4.2 预发布。** 新版增加应用内检查更新、校验下载与用户确认安装/切换，并包含手机称呼修正；普通文件互传、分块续传和手动笔记回传继续保留。
-
-[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.2) · [快速上手](docs/quick-start.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
+[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.3) · [快速上手](docs/quick-start.md) · [接收文件与预览](docs/file-library.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
 ## 下载与兼容性
 
-应用按 Android 版本与系统能力兼容，不限定 Huawei 品牌或平板形态。不同设备的目录授权、相机扫码和应用安装行为可能有差异；预发布阶段尚未完成所有机型验收。Huawei MatePad Air 12 / HarmonyOS 4.2 是目前重点验收设备，其待验收状态不表示其他手机或平板不能使用。
+**适用于 Android 8.0（API 26）及以上的手机和平板；鸿蒙设备需支持安装 Android APK。** 最低版本要求不代表所有机型已经实测；实际安装、目录提供器和系统限制可能因设备而异。
 
 | 平台/文件 | 用途 |
 | --- | --- |
 | [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-Desktop-0.4.2-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
-| [Android APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-Android-0.4.2.apk) | Android 8.0 / API 26 起，目标 API 35；手机/平板共用，Android 版本码 8。已有官方测试版直接覆盖安装，不要先卸载。 |
-| [两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-0.4.2-local.zip) | EXE、DPI 配置、APK、使用说明、校验和、MIT 与第三方许可。 |
-| [SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/SHA256SUMS.txt) | 核对以上三个 Release 资产的 SHA-256。 |
+| [Android 0.4.3 APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/VaultBridge-Android-0.4.3.apk) | 手机/平板共用，目标 API 35、版本码 9；已有同签名版本覆盖安装，不先卸载。 |
+| [Android 0.4.3 完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/VaultBridge-Android-0.4.3-local.zip) | APK、Android 指南、文件/预览/更新/验收说明、校验和、MIT 与第三方许可。 |
+| [Android 0.4.3 SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/SHA256SUMS.txt) | 核对本次 APK 和 Android 完整包；[Windows 0.4.2 校验](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/SHA256SUMS.txt)保留在其原 Release。 |
 
-**应用内更新入口从 0.4.2 起提供，旧 0.4.0 / Android 0.4.1 需先手动安装一次本版。** 两端一起更新；[0.4.0](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.0)与 [0.3.4](https://github.com/npaper2333/VaultBridge/releases/tag/v0.3.4)历史预发布保留，0.4.1 文案修正并入 0.4.2。
+**应用内更新入口从 0.4.2 起提供。旧 0.4.0 / Android 0.4.1 需先手动安装一次对应平台新版，可直接装 Android 0.4.3 / Windows 0.4.2。** 本次不发布 Desktop 0.4.3，Windows 更新器跳过缺少其平台资产的 Release。历史版本保留。
+
+Huawei MatePad Air 12 / HarmonyOS 4.2 是重点验收设备之一，不是专属运行范围；其系统安装、触控、微信入口和目录授权仍需实测，其他机型也按 [验收清单](docs/acceptance.md)检查。
 
 APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源码仓库不含签名私钥、SDK/JDK、安装包或笔记；安装包放在 Releases。自行构建的 APK 需用自己的密钥签名，通常不能覆盖官方签名版本。Obsidian 与微信需自行安装，本项目不是它们的官方产品。
+
+本地构建产物按 `dist/<版本族>/<完整版本>/` 整理，例如 Android 0.4.3 在 `dist/0.4/0.4.3/`，Windows 0.4.2 在 `dist/0.4/0.4.2/`；同版程序、配置、ZIP、校验与说明放一起。混合总包归较新 Android 版本目录，旧公共文件无法确定归版时保留在 `dist/shared/`。GitHub Release 的下载文件名不变。
 
 ## 能做什么
 
@@ -39,20 +41,21 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 | 大文件与续传（0.4.0） | 8 GiB 单文件、4 MiB 分块、暂停/继续、持久任务队列，网络故障有限退避后只补缺失块。 |
 | 平板笔记回传（0.4.0） | 平板主动勾选笔记/附件，默认电脑主库根目录，也可填库内子目录；电脑确认，同名变化另存。 |
 | 应用更新（0.4.2） | 启动后台检查可关闭，显示新版本说明；点击才下载并校验。Android 交系统确认安装，Windows 点击切换后停止分享，旧文件和设置保留。 |
+| 文件与预览（Android 0.4.3） | “文件”页查看最近接收/最近查看、搜索文件名和筛选类型；图片/PDF/文本与 Markdown 源码离线只读预览，其他格式交外部应用打开。 |
 
 不自动回写电脑，不传播删除，不建设云服务。0.4.0 的手动回传与常规主库同步分开，见 [普通文件与笔记回传](docs/file-transfer.md)。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
 
 ## 五步开始
 
 1. 完整解压 Windows 0.4.2 包，打开 `VaultBridge-Desktop-0.4.2.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
-2. 把 `VaultBridge-Android-0.4.2.apk` 发送到手机/平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
+2. 把 `VaultBridge-Android-0.4.3.apk` 发送到手机/平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
 3. 平板打开 VaultBridge，选择目标文件夹；在 Obsidian 中使用同一个文件夹。建议首次使用临时测试库。
 4. 两端连接同一局域网，平板扫码电脑二维码，或粘贴电脑端复制的配对文字。
 5. 平板“选择笔记并同步”；以后用“同步上次范围”。电脑窗口关闭后静默留在托盘，右键“退出”完全停止。
 
 微信 ZIP：打开压缩包 →“用其他应用打开”→ VaultBridge，选择笔记库导入。没有此入口时下载 ZIP，再在应用中“选择 ZIP”；解压和保存由应用完成。也可选择作为普通文件原样传给电脑。
 
-普通文件互传从两端“普通文件”进入；平板笔记回传从“电脑同步”进入。电脑接收每批都要确认，目标与同名规则见 [普通文件与笔记回传](docs/file-transfer.md)。
+普通文件互传从 Windows“普通文件”、Android“文件传输”进入；手机/平板笔记回传从“电脑同步”进入。电脑接收每批都要确认，目标与同名规则见 [普通文件与笔记回传](docs/file-transfer.md)。Android 的“文件”页用于查看已经接收完成的普通文件，规则见 [接收文件与预览](docs/file-library.md)。
 
 ## 数据保护与限制
 

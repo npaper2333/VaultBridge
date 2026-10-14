@@ -14,7 +14,7 @@ foreach ($taskDirectory in @('android/src','android/res')) {
 }
 $taskFiles += @(Get-ChildItem -LiteralPath (Join-Path $taskRoot 'tests') -File | Where-Object { $_.Extension -in @('.java','.cs','.json') } | ForEach-Object { 'tests/' + $_.Name })
 $taskFiles += @('scripts/prepare-tools.ps1','scripts/build-icon.ps1','scripts/build-desktop.ps1','scripts/build-android.ps1','scripts/test.ps1','scripts/package.ps1','scripts/prepare-public-release.ps1')
-$taskFiles += @('docs/quick-start.md','docs/desktop-quick-start.md','docs/android-quick-start.md','docs/appearance.md','docs/acceptance.md','docs/design.md','docs/protocol.md','docs/third-party.md','docs/building.md','docs/testing.md','docs/faq.md','docs/roadmap.md','docs/file-transfer.md','docs/updates.md','docs/update-plan.md','docs/release-v0.3.4.md','docs/release-v0.4.0.md','docs/release-v0.4.2.md','docs/repository-rules.md')
+$taskFiles += @('docs/quick-start.md','docs/desktop-quick-start.md','docs/android-quick-start.md','docs/appearance.md','docs/acceptance.md','docs/design.md','docs/protocol.md','docs/third-party.md','docs/building.md','docs/testing.md','docs/faq.md','docs/roadmap.md','docs/file-transfer.md','docs/file-library.md','docs/updates.md','docs/update-plan.md','docs/release-v0.3.4.md','docs/release-v0.4.0.md','docs/release-v0.4.2.md','docs/release-v0.4.3.md','docs/repository-rules.md')
 $taskFiles += @('licenses/QRCoder-MIT.txt','licenses/ZXing-Apache-2.0.txt','licenses/ZXing-NOTICE.txt','licenses/JSON-java-Public-Domain.txt')
 $taskRulesSource = Join-Path $taskRoot 'docs/repository-rules.md'
 foreach ($taskName in $taskFiles) { if (-not (Test-Path -LiteralPath (Join-Path $taskRoot $taskName) -PathType Leaf)) { throw "Missing public source: $taskName" } }

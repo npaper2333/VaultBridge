@@ -22,6 +22,7 @@ final class TransferUi {
     TransferUi(MainActivity activity){a=activity;root=new File(a.getFilesDir(),"transfers");}
     void build(LinearLayout page){
         a.content=page;LinearLayout receive=a.card("普通文件 · 电脑 → "+a.deviceName());destination=a.text("",13,false);receive.addView(destination);a.button(receive,"选择 / 切换接收位置",this::chooseDestination);a.explain(receive,"使用独立的系统目录授权，记住常用接收位置。不会更改当前 Obsidian 库。");a.button(receive,"获取电脑清单并选择接收",this::fetch,true);a.explain(receive,"电脑在普通文件页先选择发送文件或文件夹，再开始分享。保留相对目录，ZIP 原样保存，Markdown 不改写。");
+        Button recent=new Button(a);recent.setText("查看最近接收文件");recent.setAllCaps(false);UiChrome.button(recent,a.theme,false);recent.setOnClickListener(v->a.layout.showPage(6));receive.addView(recent);
         LinearLayout send=a.card("普通文件 · "+a.deviceName()+" → 电脑");a.button(send,"选择发送文件",this::chooseFiles,true);a.button(send,"选择发送文件夹",this::chooseFolder);a.explain(send,"电脑逐批确认保存位置；默认普通收件箱。同名内容变化另存，相同内容跳过。发送不删除来源。");
         LinearLayout queue=a.card("任务队列与续传");tasks=a.text("",12,false);tasks.setTextIsSelectable(true);queue.addView(tasks);a.button(queue,"选择任务继续 / 查看结果",this::selectTask);a.button(queue,"继续所有未完成任务",()->runQueue(null));
         Button pause=new Button(a);pause.setText("暂停当前任务");pause.setAllCaps(false);UiChrome.button(pause,a.theme,false);pause.setOnClickListener(v->{TransferClient current=active;if(current!=null)current.pause();});queue.addView(pause);a.explain(queue,"暂停按钮在传输时可用。任务和已校验块保存在应用私有空间；重启后点继续。取消只改变任务状态，不删除文件。");
@@ -78,7 +79,7 @@ final class TransferUi {
             public boolean canRename(TransferLanding.Entry entry)throws IOException {return (store.flags(Uri.parse(entry.id))&android.provider.DocumentsContract.Document.FLAG_SUPPORTS_RENAME)!=0;}
             public TransferLanding.Entry rename(TransferLanding.Entry entry,String path)throws IOException {return entry(store.renameNew(Uri.parse(entry.id),path),DirectoryEngine.parent(path));}
         };
-        for(int i=0;i<files.length();i++){client.check();JSONObject item=files.getJSONObject(i);if(item.optBoolean("done"))continue;File complete=client.download(job,folder,i);TransferLanding.publish(target,complete,item,client,()->TransferEngine.save(folder,job));}
+        try{for(int i=0;i<files.length();i++){client.check();JSONObject item=files.getJSONObject(i);if(item.optBoolean("done"))continue;File complete=client.download(job,folder,i);TransferLanding.publish(target,complete,item,client,()->TransferEngine.save(folder,job));}}finally{if(a.recentFilesUi!=null)a.recentFilesUi.completed(job);}
     }
     List<JSONObject> queue()throws IOException {
         List<JSONObject> result=new ArrayList<>();if(!root.exists())return result;File[] folders=root.listFiles(File::isDirectory);if(folders==null)throw new IOException("无法读取任务目录");for(File folder:folders)if(folder.getName().matches("[0-9a-f]{32}")&&new File(folder,"job.json").isFile())try{JSONObject job=TransferEngine.load(folder);if(job.optString("id").equals(folder.getName()))result.add(job);}catch(IOException e){a.log("一份任务记录无法读取，保留供检查");}result.sort(Comparator.comparingLong(j->j.optLong("created")));return result;

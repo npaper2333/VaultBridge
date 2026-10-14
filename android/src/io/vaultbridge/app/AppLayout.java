@@ -14,7 +14,7 @@ final class AppLayout {
     final MainActivity a;
     final List<LinearLayout> pages=new ArrayList<>();
     final List<Button> navigation=new ArrayList<>();
-    final String[] names={"电脑同步","ZIP 导入","库与目录","版本与恢复","设置与说明","普通文件"};
+    final String[] names={"电脑同步","ZIP 导入","库与目录","版本与恢复","设置与说明","文件传输","文件"};
     ScrollView scroll;
     AppLayout(MainActivity activity){a=activity;}
     LinearLayout column(){LinearLayout v=new LinearLayout(a);v.setOrientation(LinearLayout.VERTICAL);return v;}
@@ -27,13 +27,14 @@ final class AppLayout {
         LinearLayout root=column();root.setBackgroundColor(t.canvas);root.setPadding(0,0,0,0);a.setContentView(root);
         if(Build.VERSION.SDK_INT>=35)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
         LinearLayout header=new LinearLayout(a);header.setOrientation(LinearLayout.HORIZONTAL);header.setPadding(a.dp(20),a.dp(15),a.dp(20),a.dp(10));header.setGravity(Gravity.CENTER_VERTICAL);root.addView(header);
-        LinearLayout branding=column();branding.addView(a.text("VaultBridge",22,true));TextView subtitle=a.text("笔记与普通文件 · 局域网直传 · 0.4.2",11,false);subtitle.setTextColor(t.muted);branding.addView(subtitle);header.addView(branding,new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout branding=column();branding.addView(a.text("VaultBridge",22,true));TextView subtitle=a.text("笔记与普通文件 · 局域网直传 · 0.4.3",11,false);subtitle.setTextColor(t.muted);branding.addView(subtitle);header.addView(branding,new LinearLayout.LayoutParams(0,-2,1));
         a.updateUi.attachNotice(root);
         boolean wide=a.getResources().getConfiguration().screenWidthDp>=760;
         LinearLayout body=new LinearLayout(a);body.setOrientation(wide?LinearLayout.HORIZONTAL:LinearLayout.VERTICAL);root.addView(body,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout nav=new LinearLayout(a);nav.setOrientation(wide?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);nav.setPadding(a.dp(9),a.dp(8),a.dp(9),a.dp(8));nav.setBackground(bg(t.nav,wide?0:8));
         if(wide)body.addView(nav,new LinearLayout.LayoutParams(a.dp(178),-1));else{HorizontalScrollView wrapper=new HorizontalScrollView(a);wrapper.setHorizontalScrollBarEnabled(false);UiChrome.scrolling(wrapper,t);wrapper.addView(nav);body.addView(wrapper,new LinearLayout.LayoutParams(-1,-2));}
-        for(int i=0;i<names.length;i++){final int page=i;Button b=a.makeButton(names[i],()->showPage(page));b.setMinWidth(a.dp(100));nav.addView(b,new LinearLayout.LayoutParams(wide?-1:-2,a.dp(52)));navigation.add(b);}
+        for(int i=0;i<names.length;i++)navigation.add(null);
+        for(int index:new int[]{0,6,5,1,2,3,4}){final int page=index;Button b=a.makeButton(names[page],()->showPage(page));if(page==6){a.actions.remove(b);b.setEnabled(true);b.setOnClickListener(v->showPage(page));}b.setMinWidth(a.dp(100));nav.addView(b,new LinearLayout.LayoutParams(wide?-1:-2,a.dp(52)));navigation.set(page,b);}
         scroll=UiChrome.scroll(a,t);scroll.setBackgroundColor(t.canvas);if(wide)body.addView(scroll,new LinearLayout.LayoutParams(0,-1,1));else body.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         LinearLayout all=column();all.setPadding(a.dp(t.padding),a.dp(10),a.dp(t.padding),a.dp(24));scroll.addView(all);
         for(int i=0;i<names.length;i++){LinearLayout p=column();all.addView(p);pages.add(p);}
@@ -66,8 +67,8 @@ final class AppLayout {
         a.content=pages.get(3);LinearLayout versions=a.card("查看和恢复保留版本");action(versions,"备份与冲突版本","预览来源副本、采用来源版本或恢复旧版。操作前先备份当前内容，电脑笔记不会变化。",a::showHistory);a.notice(versions,"备份保留在原库，不自动清理。恢复旧版视为"+a.deviceName()+"本地修改，下次同步会保护它。");action(versions,"打开 Obsidian","在 Obsidian 中查看当前库的笔记。",a::openObsidian);
         a.content=pages.get(4);LinearLayout settings=a.card("外观与操作说明");TextView detected=a.text(a.appearanceConfig.summary(),14,false);settings.addView(detected);action(settings,"重新检测外观","固定晴湖书架布局。读取当前库的 .obsidian/appearance.json，跟随基础深浅色和强调色；返回前台或切换库时自动检测。",a::refreshAppearance);a.notice(settings,"只读取基础外观，不改动或传输 Obsidian 配置。主题 CSS 和插件的颜色覆盖不参与检测。");
         CheckBox descriptions=new CheckBox(a);descriptions.setText("显示每个选项的说明");descriptions.setTextColor(t.ink);descriptions.setButtonTintList(UiChrome.controlTint(t));descriptions.setChecked(a.prefs.getBoolean("showHelp",true));settings.addView(descriptions);descriptions.setOnCheckedChangeListener((box,value)->{a.prefs.edit().putBoolean("showHelp",value).apply();a.helpViews.forEach(v->v.setVisibility(value?View.VISIBLE:View.GONE));});a.notice(settings,"关闭常规说明后，目录操作、恢复、冲突等重要影响提示仍保留。");action(settings,"库位置管理","只访问你授权的目录。权限失效可重新选择同一文件夹。",a::showLibraryManager);a.updateUi.settings(settings);
-        a.transferUi.build(pages.get(5));a.content=all;LinearLayout status=a.card("任务结果");a.progress=new ProgressBar(a,null,android.R.attr.progressBarStyleHorizontal);a.progress.setIndeterminate(true);a.progress.setVisibility(View.GONE);a.progress.setProgressTintList(ColorStateList.valueOf(t.accent));a.progress.setIndeterminateTintList(ColorStateList.valueOf(t.accent));status.addView(a.progress);a.message=a.text(a.prefs.getString("lastResult","先选择库位置，再配对电脑或接收 ZIP。"),13,false);a.message.setTextIsSelectable(true);status.addView(a.message);TextView foot=a.text("电脑保留主库 · 回传逐批确认 · 不自动同步删除",12,false);foot.setTextColor(t.muted);all.addView(foot);
+        a.transferUi.build(pages.get(5));a.recentFilesUi.build(pages.get(6));a.content=all;LinearLayout status=a.card("任务结果");a.progress=new ProgressBar(a,null,android.R.attr.progressBarStyleHorizontal);a.progress.setIndeterminate(true);a.progress.setVisibility(View.GONE);a.progress.setProgressTintList(ColorStateList.valueOf(t.accent));a.progress.setIndeterminateTintList(ColorStateList.valueOf(t.accent));status.addView(a.progress);a.message=a.text(a.prefs.getString("lastResult","先选择库位置，再配对电脑或接收 ZIP。"),13,false);a.message.setTextIsSelectable(true);status.addView(a.message);TextView foot=a.text("电脑保留主库 · 回传逐批确认 · 不自动同步删除",12,false);foot.setTextColor(t.muted);all.addView(foot);
         a.updateLabels();showPage(a.currentPage);
     }
-    void showPage(int index){a.currentPage=index;for(int i=0;i<pages.size();i++){pages.get(i).setVisibility(i==index?View.VISIBLE:View.GONE);navigation.get(i).setBackground(bg(i==index?a.theme.wash:a.theme.nav,7));navigation.get(i).setTextColor(i==index?a.theme.ink:a.theme.muted);}scroll.scrollTo(0,0);if(index==2)a.refreshDirectory();}
+    void showPage(int index){if(index<0||index>=pages.size())index=0;a.currentPage=index;for(int i=0;i<pages.size();i++){pages.get(i).setVisibility(i==index?View.VISIBLE:View.GONE);navigation.get(i).setBackground(bg(i==index?a.theme.wash:a.theme.nav,7));navigation.get(i).setTextColor(i==index?a.theme.ink:a.theme.muted);}scroll.scrollTo(0,0);if(index==2)a.refreshDirectory();if(index==6)a.recentFilesUi.refresh();}
 }

@@ -1,5 +1,24 @@
 # 验证状态
 
+## Android 0.4.3 接收文件与离线预览
+
+版本日期：2026-10-14。Android 0.4.3 / 版本码 9，本机构建及 v2/v3 签名验证通过，证书与旧版一致。Windows 保持 0.4.2 原代码与程序字节；本次不发布 Desktop 0.4.3。
+
+| 检查 | 结果和边界 |
+| --- | --- |
+| Windows 核心、传输与更新 | 原 0.4.2 EXE 本轮回归 137 项通过，未重建或修改 Windows 程序。 |
+| 实际 Java 互传 / 原有 TLS | 29 / 5 项通过，生成文件与回环服务，不代替真实 Wi-Fi。 |
+| Android 核心 / 目录 / SAF 发布 | 37 / 39 / 33 项通过；SAF 模拟在既有 28 项上新增 5 项，不代替真实提供器。 |
+| Android 更新 | 60 项通过，使用合成元数据与下载内容。 |
+| 最近接收文件 | 37 项通过，纯 Java 索引/筛选/查看记录及旧任务规则检查。 |
+| 预览规则 | 45 项通过，纯 Java 格式、大小/像素/页数、编码与校验规则检查，不是实际渲染测试。 |
+| Android 外观解析 / UiTheme | 21 / 28 项通过，配色代码检查不代替原生显示。 |
+| Windows 原生 UI | 代码和程序未改，沿用 0.4.2 的 126 项通过记录，本轮未重复运行。实际 175% DPI，其余比例为模拟，跨屏/触摸仍需验收。 |
+
+Android 原生文件页和预览 Activity 已通过 SDK 编译；纯 Java 回归使用合成记录和文件，不启动真实外部应用或安装器。实际只读 URI、文件提供器、图片/PDF 解码、手势和应用选择器仍须设备验证。分发资产哈希见 [v0.4.3 SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/SHA256SUMS.txt)，不在本节重复嵌入包哈希。
+
+适用于 Android 8.0（API 26）及以上手机和平板，鸿蒙设备需支持安装 Android APK；最低要求不代表所有机型已经实测。MatePad Air 12 / HarmonyOS 4.2 是重点验收设备之一。操作见 [file-library.md](file-library.md)，人工清单见 [acceptance.md](acceptance.md)。Windows 0.4.2 的原回归和自动执行环境 `SEC_E_NO_CREDENTIALS` HTTPS 失败记录保留如下，不能据此宣称 Windows 实际下载/切换已验收。
+
 ## 0.4.2 应用内更新与称呼适配
 
 版本日期：2026-10-14。两端 0.4.2、Android 版本码 8；0.4.1 本地文案修正并入本版，不单独发布 Release。Windows 与 Android 本机构建通过，当前自动回归结果如下，不沿用历史版本的结果或文件哈希充当本版验证。

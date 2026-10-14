@@ -38,8 +38,8 @@ final class TransferLanding {
             return size==expected&&Engine.hex(digest.digest()).equals(sha);
         }catch(NoSuchAlgorithmException e){throw new IOException(e);}
     }
-    static String finish(JSONObject item,JSONObject landing,String saved,Save save)throws IOException {
-        try{item.put("done",true).put("saved",saved);landing.put("state","published");save.run();return saved;}catch(JSONException e){throw new IOException("接收发布记录无法更新",e);}
+    static String finish(JSONObject item,JSONObject landing,Entry finalEntry,Save save)throws IOException {
+        try{item.put("done",true).put("saved",finalEntry.path).put("finalUri",finalEntry.id);if(item.optLong("receivedAt",0)<=0)item.put("receivedAt",System.currentTimeMillis());landing.put("state","published");save.run();return finalEntry.path;}catch(JSONException e){throw new IOException("接收发布记录无法更新",e);}
     }
     static String publish(Tree tree,File complete,JSONObject item,TransferEngine.Control control,Save save)throws IOException {
         try {
@@ -53,11 +53,11 @@ final class TransferLanding {
             if(!pending.isEmpty()){
                 pending=TransferEngine.path(pending);if(!DirectoryEngine.parent(pending).equals(parent))throw new IOException("接收发布记录的目录不符");
                 Entry published=tree.find(pending);
-                if(published!=null&&!published.directory&&(published.size==size||published.size<0)&&verified(tree,published,size,sha,control))return finish(item,landing,published.path,save);
+                if(published!=null&&!published.directory&&(published.size==size||published.size<0)&&verified(tree,published,size,sha,control))return finish(item,landing,published,save);
             }
             String target=desired;int number=0;Entry existing;
             while((existing=tree.find(target))!=null){
-                if(content(tree,existing,size,sha,control))return finish(item,landing,existing.path,save);
+                if(content(tree,existing,size,sha,control))return finish(item,landing,existing,save);
                 if(++number>10000)throw new IOException("重名文件过多");target=TransferEngine.alternate(desired,number);
             }
             Entry staging;String tempPath=landing.optString("temporary",""),tempId=landing.optString("uri","");
@@ -85,7 +85,7 @@ final class TransferLanding {
             // Recheck collisions after the potentially long SAF copy. Never request replacement.
             target=desired;number=0;
             while((existing=tree.find(target))!=null){
-                if(content(tree,existing,size,sha,control))return finish(item,landing,existing.path,save);
+                if(content(tree,existing,size,sha,control))return finish(item,landing,existing,save);
                 if(++number>10000)throw new IOException("重名文件过多");target=TransferEngine.alternate(desired,number);
             }
             landing.put("final",target).put("state","publishing");save.run();check(control);
@@ -93,7 +93,7 @@ final class TransferLanding {
             if(renamed==null||renamed.directory||!renamed.path.equals(target))throw new IOException("提供器未按目标名称发布，暂存与记录保留供检查");
             Entry finalEntry=tree.find(target);
             if(finalEntry==null||!finalEntry.id.equals(renamed.id)||!finalEntry.path.equals(target)||!verified(tree,finalEntry,size,sha,control))throw new IOException("发布后的目标身份、名称或内容校验失败，未标记完成");
-            return finish(item,landing,target,save);
+            return finish(item,landing,finalEntry,save);
         }catch(JSONException e){throw new IOException("接收发布记录无效",e);}
     }
 }

@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     LibraryUi libraryUi;
     TransferUi transferUi;
     UpdateUi updateUi;
+    RecentFilesUi recentFilesUi;
     final ExecutorService worker = Executors.newSingleThreadExecutor();
     final List<View> actions = new ArrayList<>();
     final List<TextView> helpViews = new ArrayList<>();
@@ -56,7 +57,7 @@ public class MainActivity extends Activity {
         super.onCreate(state);
         if(state!=null)currentPage=state.getInt("page",0);
         try {libraryUi=new LibraryUi(this);} catch(IOException ex){dialog().setTitle("库记录无法读取").setMessage(ex.getMessage()+"。已有笔记未变动；本次停止操作。").setPositiveButton("关闭",(d,w)->finish()).show();return;}
-        transferUi=new TransferUi(this);updateUi=new UpdateUi(this);rebuildUi();receiveIntent(getIntent());updateUi.start();
+        transferUi=new TransferUi(this);updateUi=new UpdateUi(this);recentFilesUi=new RecentFilesUi(this);rebuildUi();receiveIntent(getIntent());updateUi.start();
     }
     void rebuildUi() {
         if(busy){rebuildAfterWork=true;return;}
@@ -72,7 +73,7 @@ public class MainActivity extends Activity {
         worker.submit(()->{final AppearanceConfig next=AppearanceReader.read(getContentResolver(),location,dark);runOnUiThread(()->{if(destroyed||request!=appearanceRequest||!location.equals(prefs.getString("tree","")))return;if(busy){appearanceAfterWork=true;return;}if(!next.key().equals(appearanceConfig.key())){preserveAppearanceInput();appearanceConfig=next;rebuildUi();}});});
     }
     void resetAppearanceForVault(){appearanceRequest++;appearanceConfig=AppearanceConfig.fallback(systemDark(),"正在检测当前库外观");rebuildUi();refreshAppearance();}
-    @Override protected void onResume(){super.onResume();refreshAppearance();if(updateUi!=null)updateUi.resume();}
+    @Override protected void onResume(){super.onResume();refreshAppearance();if(updateUi!=null)updateUi.resume();if(recentFilesUi!=null&&currentPage==6)recentFilesUi.refresh();}
     @Override public void onConfigurationChanged(android.content.res.Configuration config){super.onConfigurationChanged(config);if(libraryUi!=null){preserveAppearanceInput();rebuildUi();refreshAppearance();}}
     @Override protected void onSaveInstanceState(Bundle out){out.putInt("page",currentPage);super.onSaveInstanceState(out);}
     int dp(int value) {return Math.round(value*getResources().getDisplayMetrics().density);}
@@ -271,5 +272,5 @@ public class MainActivity extends Activity {
         else if (request == ZIP && data.getData() != null) acceptZip(data.getData(), false);
         else if (request == SCAN) pair(data.getStringExtra("pairing"));
     }
-    @Override protected void onDestroy() {if(updateUi!=null)updateUi.close(); if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() {if(recentFilesUi!=null)recentFilesUi.close();if(updateUi!=null)updateUi.close(); if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
 }

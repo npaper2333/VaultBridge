@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskReport = Join-Path $taskRoot ('work\validation-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path $taskReport -Force | Out-Null
-$taskExe = Join-Path $taskRoot 'dist\VaultBridge-Desktop-0.4.2.exe'
+$taskExe = Join-Path $taskRoot 'dist\0.4\0.4.2\VaultBridge-Desktop-0.4.2.exe'
 $taskJdk = (Get-ChildItem -LiteralPath (Join-Path $taskRoot 'tools') -Directory | Where-Object Name -Like 'jdk-17*' | Select-Object -First 1).FullName
 $taskZxing = Join-Path $taskRoot 'tools\downloads\zxing-core-3.5.3.jar'
 $taskJson = Join-Path $taskRoot 'tools\downloads\json-20240303.jar'
@@ -16,8 +16,10 @@ $taskJavaSources = @(
     'android/src/io/vaultbridge/app/TransferEngine.java', 'android/src/io/vaultbridge/app/TransferClient.java',
     'android/src/io/vaultbridge/app/TransferLanding.java',
     'android/src/io/vaultbridge/app/UpdateInfo.java', 'android/src/io/vaultbridge/app/UpdateClient.java',
+    'android/src/io/vaultbridge/app/RecentFiles.java', 'android/src/io/vaultbridge/app/PreviewRules.java',
     'tests/DirectoryTest.java', 'tests/EngineTest.java', 'tests/Base64.java', 'tests/LanInteropTest.java',
-    'tests/AppearanceTest.java', 'tests/TransferTest.java', 'tests/TransferLandingTest.java', 'tests/UpdateTest.java'
+    'tests/AppearanceTest.java', 'tests/TransferTest.java', 'tests/TransferLandingTest.java', 'tests/UpdateTest.java',
+    'tests/RecentFilesTest.java', 'tests/PreviewRulesTest.java'
 ) | ForEach-Object { Join-Path $taskRoot $_ }
 & (Join-Path $taskJdk 'bin\javac.exe') '-J-Dfile.encoding=UTF-8' -encoding UTF-8 --release 8 -classpath ($taskZxing + ';' + $taskJson) -d $taskClasses $taskJavaSources
 if ($LASTEXITCODE -ne 0) { throw 'Java test compilation failed.' }
@@ -39,8 +41,23 @@ if ($LASTEXITCODE -ne 0) { throw 'Android safe transfer landing checks failed.' 
 & (Join-Path $taskJdk 'bin\java.exe') -cp $taskClasspath io.vaultbridge.app.UpdateTest $taskReport | Tee-Object -FilePath (Join-Path $taskReport 'android-update-results.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Android update metadata and download checks failed.' }
 
+& (Join-Path $taskJdk 'bin\java.exe') -cp $taskClasspath io.vaultbridge.app.RecentFilesTest $taskReport | Tee-Object -FilePath (Join-Path $taskReport 'android-recent-files-results.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Android received files index checks failed.' }
+
+& (Join-Path $taskJdk 'bin\java.exe') -cp $taskClasspath io.vaultbridge.app.PreviewRulesTest $taskReport | Tee-Object -FilePath (Join-Path $taskReport 'android-preview-rules-results.txt')
+if ($LASTEXITCODE -ne 0) { throw 'Android offline preview rules checks failed.' }
+
 if (-not $SkipDesktopUi) {
-    $taskUiProcess = Start-Process -FilePath $taskExe -ArgumentList @('--ui-test', ('"' + $taskReport + '"')) -WindowStyle Hidden -Wait -PassThru
+    # Keep the released Windows bytes intact; its UI fixture path is ../tests from the EXE.
+    $taskUiHost = Join-Path $taskReport 'desktop-ui-host'
+    $taskUiBin = Join-Path $taskUiHost 'bin'
+    $taskUiFixtures = Join-Path $taskUiHost 'tests'
+    New-Item -ItemType Directory -Path $taskUiBin,$taskUiFixtures -Force | Out-Null
+    $taskUiExe = Join-Path $taskUiBin ([IO.Path]::GetFileName($taskExe))
+    Copy-Item -LiteralPath $taskExe -Destination $taskUiExe
+    Copy-Item -LiteralPath ($taskExe + '.config') -Destination ($taskUiExe + '.config')
+    Copy-Item -LiteralPath (Join-Path $taskRoot 'tests\appearance-cases.json') -Destination (Join-Path $taskUiFixtures 'appearance-cases.json')
+    $taskUiProcess = Start-Process -FilePath $taskUiExe -ArgumentList @('--ui-test', ('"' + $taskReport + '"')) -WindowStyle Hidden -Wait -PassThru
     Get-Content -LiteralPath (Join-Path $taskReport 'appearance-results.txt')
     if ($taskUiProcess.ExitCode -ne 0) { throw 'Native appearance checks failed.' }
 }

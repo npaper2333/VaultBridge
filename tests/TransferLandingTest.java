@@ -57,12 +57,15 @@ public final class TransferLandingTest {
         check(tree.find(partial).id.equals(id)&&tree.find(partial).size==65536,"paused partial is bound to its actual URI and bytes");
         final Record resume=new Record(new JSONObject(record.persisted.toString()));String saved=publish(tree,content,resume,null);
         check(saved.equals("README")&&resume.persisted.optBoolean("done"),"restart completes and publishes original extensionless name");
+        check(resume.persisted.getString("finalUri").equals(tree.find("README").id)&&!resume.persisted.getString("finalUri").equals(id),"completion records the actual renamed final URI rather than temporary URI");
+        check(resume.persisted.getLong("receivedAt")>0,"verified receipt time is recorded with completion");
         check(tree.created==1&&tree.writeNames.size()==2&&tree.writeNames.get(0).equals(tree.writeNames.get(1)),"restart rewrites the same owned temporary only");
         check(Arrays.equals(tree.nodes.get("readme").bytes,bytes)&&tree.partials()==0,"rename publishes fully verified bytes");
 
         MemoryTree collision=new MemoryTree();byte[] old="original must stay".getBytes("UTF-8");collision.add("README",old);Record collisionRecord=new Record(item("README",content));
         check(publish(collision,content,collisionRecord,null).equals("README (VaultBridge 1)"),"extensionless collision receives a numbered final name");
         check(Arrays.equals(collision.nodes.get("readme").bytes,old),"original collision content stays untouched");
+        check(collisionRecord.persisted.getString("finalUri").equals(collision.find("README (VaultBridge 1)").id),"numbered alternate completion records its final URI");
         check(collision.writeNames.stream().allMatch(n->n.endsWith(".partial")),"provider writes target owned partial names only");
 
         MemoryTree unknown=new MemoryTree();unknown.add("README",bytes).metadata=-1;Record unknownRecord=new Record(item("README",content));
@@ -87,10 +90,12 @@ public final class TransferLandingTest {
         check(interrupted.find("file.md")!=null&&!interruptedRecord.persisted.optBoolean("done"),"rename can finish before completion record is persisted");
         Record afterRestart=new Record(new JSONObject(interruptedRecord.persisted.toString()));
         check(publish(interrupted,content,afterRestart,null).equals("file.md")&&interrupted.created==1&&interrupted.renames==1,"restart reuses verified published target after record interruption");
+        check(afterRestart.persisted.getString("finalUri").equals(interrupted.find("file.md").id),"rename-before-record recovery saves final URI for later file lookup");
 
         MemoryTree ack=new MemoryTree();ack.renameAckFailure=true;Record ackRecord=new Record(item("file.md",content));fails(()->publish(ack,content,ackRecord,null));ack.renameAckFailure=false;
         Record ackRestart=new Record(new JSONObject(ackRecord.persisted.toString()));
         check(publish(ack,content,ackRestart,null).equals("file.md")&&ack.renames==1,"lost provider rename acknowledgement recovers without duplicate publish");
+        MemoryTree identical=new MemoryTree();identical.add("same.md",bytes);Record identicalRecord=new Record(item("same.md",content));publish(identical,content,identicalRecord,null);check(identical.created==1&&identicalRecord.persisted.getString("finalUri").equals(identical.find("same.md").id),"same-content skip also records the existing verified final URI");
 
         MemoryTree changed=new MemoryTree();Record changedRecord=new Record(item("file.md",content));fails(()->publish(changed,content,changedRecord,()->{if(changed.written>=65536)throw new TransferEngine.Paused();}));
         String temp=changedRecord.persisted.getJSONObject("landing").getString("temporary");changed.nodes.get(temp.toLowerCase(Locale.ROOT)).id="external replacement";int rewrites=changed.writeNames.size();Record changedResume=new Record(new JSONObject(changedRecord.persisted.toString()));fails(()->publish(changed,content,changedResume,null));

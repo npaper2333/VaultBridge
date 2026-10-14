@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
-$taskOutput = Join-Path $taskRoot 'dist'
+$taskOutput = Join-Path $taskRoot 'dist\0.4\0.4.2'
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
 & (Join-Path $PSScriptRoot 'build-icon.ps1')
 $taskQrLibrary = Join-Path $taskRoot 'tools\qrcoder-1.6.0\lib\net40\QRCoder.dll'
