@@ -2,13 +2,17 @@
 
 作者：**Nitro**（[@npaper2333](https://github.com/npaper2333)）。
 
-把 Windows 电脑上的 Obsidian 笔记按需送到 Android 平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，平板接收副本。
+把 Windows 电脑上的 Obsidian 笔记按需送到 Android 手机或平板：同一局域网增量同步，或从微信接收 ZIP 后直接解压到笔记库。电脑是主库，Android 端接收副本。
 
-**免费、无云端、MIT 开源。当前版本为 0.4.2 预发布。** 新版增加应用内检查更新、校验下载与用户确认安装/切换，并包含手机称呼修正；普通文件互传、分块续传和手动笔记回传继续保留。Huawei MatePad Air 12 / HarmonyOS 4.2 的系统安装、触控、微信入口和目录授权仍需真机验收。
+**适用于 Android 8.0 及以上的手机和平板；鸿蒙设备需支持安装 Android APK。** 手机和平板使用同一个 APK。
+
+**免费、无云端、MIT 开源。当前版本为 0.4.2 预发布。** 新版增加应用内检查更新、校验下载与用户确认安装/切换，并包含手机称呼修正；普通文件互传、分块续传和手动笔记回传继续保留。
 
 [下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.2) · [快速上手](docs/quick-start.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
 ## 下载与兼容性
+
+应用按 Android 版本与系统能力兼容，不限定 Huawei 品牌或平板形态。不同设备的目录授权、相机扫码和应用安装行为可能有差异；预发布阶段尚未完成所有机型验收。Huawei MatePad Air 12 / HarmonyOS 4.2 是目前重点验收设备，其待验收状态不表示其他手机或平板不能使用。
 
 | 平台/文件 | 用途 |
 | --- | --- |
