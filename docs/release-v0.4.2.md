@@ -26,3 +26,5 @@
 Windows 与 Android 本机构建通过，APK 0.4.2 / 版本码 8 签名验证通过，证书与旧版一致。Windows 核心/传输/更新 137 项、实际 Java 互传 29 项、TLS 5 项、Android 核心 37 项、目录 39 项、SAF 发布模拟 28 项、更新 60 项、外观解析 21 项、UiTheme 28 项及 Windows 原生 UI 126 项通过。UI 检查包含更新提示、顶部布局及五档 DPI 深浅色边界；本机实际 175% DPI，其他比例为模拟，不代替实际跨显示器或触控验收。分发资产哈希见本版 Release 的 SHA256SUMS.txt，详细状态见 [testing.md](testing.md)，操作说明见 [updates.md](updates.md)。
 
 自动代码与模拟测试不能代替 Android 系统安装、HarmonyOS 来源权限、真实 SAF、微信、扫码、快速滑动或 Windows 运行中切换验收。先用临时库，按 [acceptance.md](acceptance.md)检查。保留旧版本和缓存，不自动清理；源码采用 MIT，作者 Nitro，分发包包含第三方许可证。
+
+发布后补充：Android 实际更新客户端下载与 SHA-256 核验通过。Windows 本次自动执行环境的 HTTPS 凭据层失败，最简 .NET / WinHTTP 对照也未能收到 HTTP 响应；真实 Windows 下载、安装/切换仍待正常桌面环境验收，详情见 [testing.md](testing.md)。本版四个分发资产保持原字节不变，可从上述链接手动安装。
