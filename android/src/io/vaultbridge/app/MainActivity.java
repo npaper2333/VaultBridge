@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
     TransferUi transferUi;
     UpdateUi updateUi;
     RecentFilesUi recentFilesUi;
+    FeedbackUi feedbackUi;
     final ExecutorService worker = Executors.newSingleThreadExecutor();
     final List<View> actions = new ArrayList<>();
     final List<TextView> helpViews = new ArrayList<>();
@@ -53,18 +54,20 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         prefs=getSharedPreferences("vaultbridge",MODE_PRIVATE);
         appearanceConfig=AppearanceConfig.fallback(systemDark(),"等待检测当前库外观");
-        setTheme(UiChrome.themeResource(this,appearanceConfig.dark,false));
+        setTheme(UiChrome.themeResource(this,resolvedAppearance().dark,false));
         super.onCreate(state);
         if(state!=null)currentPage=state.getInt("page",0);
         try {libraryUi=new LibraryUi(this);} catch(IOException ex){dialog().setTitle("库记录无法读取").setMessage(ex.getMessage()+"。已有笔记未变动；本次停止操作。").setPositiveButton("关闭",(d,w)->finish()).show();return;}
-        transferUi=new TransferUi(this);updateUi=new UpdateUi(this);recentFilesUi=new RecentFilesUi(this);rebuildUi();receiveIntent(getIntent());updateUi.start();
+        transferUi=new TransferUi(this);updateUi=new UpdateUi(this);recentFilesUi=new RecentFilesUi(this);feedbackUi=new FeedbackUi(this);rebuildUi();receiveIntent(getIntent());updateUi.start();
     }
     void rebuildUi() {
         if(busy){rebuildAfterWork=true;return;}
-        theme=UiTheme.from(appearanceConfig);accent=theme.accent;ink=theme.ink;
+        final int scrollY=layout!=null&&layout.scroll!=null?layout.scroll.getScrollY():0;
+        theme=UiTheme.from(resolvedAppearance());accent=theme.accent;ink=theme.ink;
         setTheme(UiChrome.themeResource(this,theme.dark,false));
-        layout=new AppLayout(this);layout.build();
+        layout=new AppLayout(this);layout.build();layout.scroll.post(()->{if(layout!=null)layout.scroll.scrollTo(0,scrollY);});if(feedbackUi!=null)feedbackUi.retheme();
     }
+    AppearanceConfig resolvedAppearance(){return AppearancePreferences.resolve(appearanceConfig,systemDark(),prefs.getString(AppearancePreferences.MODE,"obsidian"),prefs.getString(AppearancePreferences.SOURCE,"obsidian"),prefs.getString(AppearancePreferences.COLOR,"#d9b55c"));}
     boolean systemDark(){return (getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;}
     void preserveAppearanceInput(){if(mergeFolder!=null)prefs.edit().putString("mergeFolder",mergeFolder.getText().toString()).apply();}
     void refreshAppearance(){
@@ -272,5 +275,5 @@ public class MainActivity extends Activity {
         else if (request == ZIP && data.getData() != null) acceptZip(data.getData(), false);
         else if (request == SCAN) pair(data.getStringExtra("pairing"));
     }
-    @Override protected void onDestroy() {if(recentFilesUi!=null)recentFilesUi.close();if(updateUi!=null)updateUi.close(); if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null&&transferUi.active!=null)transferUi.active.pause(); worker.shutdown(); super.onDestroy(); }
+    @Override protected void onDestroy() {if(feedbackUi!=null)feedbackUi.close();if(recentFilesUi!=null)recentFilesUi.close();if(updateUi!=null)updateUi.close(); if(libraryUi!=null&&!busy)try{libraryUi.saveOptions();}catch(IOException ignored){} destroyed = true;if(transferUi!=null)transferUi.close(); worker.shutdown(); super.onDestroy(); }
 }

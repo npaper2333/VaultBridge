@@ -14,7 +14,7 @@ using System.Web.Script.Serialization;
 
 namespace VaultBridge {
     internal sealed class UpdateInfo {
-        internal const string CurrentVersion = "0.4.2";
+        internal const string CurrentVersion = "0.5.2";
         public string version, page, download, sha256, notes;
         public long size;
         public bool prerelease;

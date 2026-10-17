@@ -22,6 +22,6 @@ PR 描述说明触发问题、修改后行为、验证方法及限制。贡献�
 
 ## 问题报告
 
-使用中遇到问题或有建议，欢迎通过 [GitHub Issues](https://github.com/npaper2333/VaultBridge/issues) 反馈，或添加作者微信：**`nitro1447`**（备注“VaultBridge 反馈”）。
+使用中遇到问题或有建议，可以打开 [GitHub 新 Issue 页面](https://github.com/npaper2333/VaultBridge/issues/new)。需要登录 GitHub，提交内容公开；0.5.2 的 App 入口只打开该网页，由你最终提交，不预填或上传旧草稿。希望私下交流，可添加作者微信：**`nitro1447`**（备注“VaultBridge 反馈”）。
 
 请提供应用版本、操作系统/设备、最小复现步骤、预期和实际结果。截图先遮盖库名、正文、连接地址和二维码。涉及 ZIP/文件时，提供自建的小型示例，并说明是否出现本地修改、断网或目录调整；不上传真实库。

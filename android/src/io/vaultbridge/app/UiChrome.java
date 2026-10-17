@@ -11,6 +11,8 @@ import android.widget.*;
 
 /** Neutral native drawing from the first frame, including lists and dialogs. */
 final class UiChrome {
+    /** Components that own semantic colors must not be recolored as ordinary text. */
+    interface ThemedContent { void applyChrome(UiTheme theme); }
     static int dp(Context c,int value){return Math.round(value*c.getResources().getDisplayMetrics().density);}
     static int themeResource(Context c,boolean dark,boolean dialog){String name=dialog?(dark?"VaultBridgeDialogDark":"VaultBridgeDialogLight"):(dark?"VaultBridgeDark":"VaultBridgeLight");int resource=c.getResources().getIdentifier(name,"style",c.getPackageName());if(resource==0)throw new IllegalStateException("Missing native theme: "+name);return resource;}
     static ColorStateList controlTint(UiTheme t){return new ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled},new int[]{android.R.attr.state_checked},new int[]{}},new int[]{t.muted,t.ink,t.muted});}
@@ -38,6 +40,7 @@ final class UiChrome {
         }
     }
     static void decorate(View view,UiTheme theme){
+        if(view instanceof ThemedContent){((ThemedContent)view).applyChrome(theme);return;}
         scrolling(view,theme);if(view instanceof EditText)input((EditText)view,theme);else if(view instanceof TextView)((TextView)view).setTextColor(theme.ink);if(view instanceof CompoundButton)((CompoundButton)view).setButtonTintList(controlTint(theme));if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)decorate(group.getChildAt(i),theme);}
     }
 }

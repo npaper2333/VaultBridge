@@ -1,11 +1,11 @@
 param([switch]$AndroidOnly)
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
-$taskDesktopVersion = '0.4.2'
-$taskAndroidVersion = '0.4.3'
+$taskDesktopVersion = '0.5.2'
+$taskAndroidVersion = '0.5.2'
 $taskStamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
-$taskDist = Join-Path $taskRoot 'dist\0.4\0.4.3'
-$taskDesktopDist = Join-Path $taskRoot 'dist\0.4\0.4.2'
+$taskDist = Join-Path $taskRoot 'dist\0.5\0.5.2'
+$taskDesktopDist = Join-Path $taskRoot 'dist\0.5\0.5.2'
 $taskScope = if ($AndroidOnly) { "Android-$taskAndroidVersion" } else { "Android-$taskAndroidVersion-Windows-$taskDesktopVersion" }
 $taskPrefix = "VaultBridge-$taskScope-$taskStamp"
 $taskStage = Join-Path $taskRoot ('work\packaging-' + $taskScope + '-' + $taskStamp)
@@ -26,6 +26,7 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'LICENSE') -Destination (Join-Path $
 $taskGuides = @{ 'android-quick-start.md' = "$taskPrefix-android-guide.md" }
 if (-not $AndroidOnly) { $taskGuides['quick-start.md'] = "$taskPrefix-guide.md"; $taskGuides['desktop-quick-start.md'] = "$taskPrefix-desktop-guide.md" }
 $taskDocumentNames = @{ 'file-transfer.md' = "$taskPrefix-file-transfer.md"; 'acceptance.md' = "$taskPrefix-acceptance.md"; 'updates.md' = "$taskPrefix-updates.md"; 'file-library.md' = "$taskPrefix-file-library.md" }
+$taskDocumentNames['settings-feedback.md'] = "$taskPrefix-settings-feedback.md"
 function Write-TaskStandaloneGuide([string]$Source, [string]$Name, [string]$Directory = $taskDist) {
     $taskText = Get-Content -LiteralPath $Source -Raw
     foreach ($taskMapping in @($taskGuides.GetEnumerator()) + @($taskDocumentNames.GetEnumerator())) {
@@ -41,11 +42,11 @@ foreach ($taskGuide in $taskGuides.GetEnumerator()) {
     Write-TaskStandaloneGuide (Join-Path $taskStage $taskGuide.Value) $taskGuide.Value $taskGuideDirectory
 }
 $taskCommon = @((Join-Path $taskStage 'LICENSE.txt'), $taskLicenses)
-foreach ($taskGuide in @('file-transfer.md', 'acceptance.md', 'updates.md', 'file-library.md')) {
+foreach ($taskGuide in @('file-transfer.md', 'acceptance.md', 'updates.md', 'file-library.md', 'settings-feedback.md')) {
     $taskGuidePath = Join-Path $taskStage $taskGuide
     Copy-Item -LiteralPath (Join-Path $taskRoot ('docs\' + $taskGuide)) -Destination $taskGuidePath
     Write-TaskStandaloneGuide $taskGuidePath $taskDocumentNames[$taskGuide]
-    if (-not $AndroidOnly) { Write-TaskStandaloneGuide $taskGuidePath $taskDocumentNames[$taskGuide] $taskDesktopDist }
+    if (-not $AndroidOnly -and $taskDesktopDist -ne $taskDist) { Write-TaskStandaloneGuide $taskGuidePath $taskDocumentNames[$taskGuide] $taskDesktopDist }
     $taskCommon += $taskGuidePath
 }
 $taskChecksums = foreach ($taskName in $taskArtifacts) { $taskHash = (Get-FileHash -LiteralPath $taskArtifactPaths[$taskName] -Algorithm SHA256).Hash.ToLowerInvariant(); "$taskHash  $taskName" }
@@ -65,7 +66,7 @@ if (-not $AndroidOnly) {
     $taskDesktopBundle = Join-Path $taskDesktopDist ("VaultBridge-Desktop-$taskDesktopVersion-portable-$taskStamp.zip")
     $taskDesktopFiles = @($taskArtifactPaths[$taskExeName], $taskArtifactPaths[$taskConfigName], (Join-Path $taskStage $taskGuides['desktop-quick-start.md']), (Join-Path $taskStage $taskDesktopSum)) + $taskCommon
     Compress-Archive -LiteralPath $taskDesktopFiles -DestinationPath $taskDesktopBundle -CompressionLevel Optimal
-    Write-Output "Desktop distribution (unchanged program $taskDesktopVersion): $taskDesktopBundle"
+    Write-Output "Desktop distribution ($taskDesktopVersion): $taskDesktopBundle"
 }
 
 $taskAndroidHashes = $taskChecksums | Where-Object { $_ -like '*Android*' }

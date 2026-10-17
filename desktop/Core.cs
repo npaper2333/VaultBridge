@@ -58,6 +58,10 @@ namespace VaultBridge {
         public string style = "lake";
         public bool showHelp = true;
         public bool checkUpdatesOnStart = true;
+        public string themeMode = "obsidian";
+        public string accentMode = "obsidian";
+        public string customAccent = "#7f6df2";
+        public string sentDisplay = "marked";
         public string vault = "";
         public int port = 27183;
         public string vaultId = Guid.NewGuid().ToString("N");

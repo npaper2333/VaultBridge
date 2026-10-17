@@ -24,6 +24,7 @@ final class RecentFilesUi {
     final RecentFiles catalog;
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     final Handler handler=new Handler(Looper.getMainLooper());
+    final SourceThumbnailLoader thumbnails;
     final Map<String,Long> scanned=new HashMap<>();
     volatile boolean closed;
     volatile int request;
@@ -34,7 +35,7 @@ final class RecentFilesUi {
     LinearLayout rows;
     Button receivedButton,viewedButton,filterButton,previous,next,loadMore;
     Runnable searchLater;
-    RecentFilesUi(MainActivity activity){a=activity;catalog=new RecentFiles(a.getFilesDir());}
+    RecentFilesUi(MainActivity activity){a=activity;catalog=new RecentFiles(a.getFilesDir());thumbnails=new SourceThumbnailLoader(a);}
     void post(Runnable task){handler.post(()->{if(!closed&&!a.destroyed)task.run();});}
     Button button(String title,Runnable action){Button button=new Button(a);button.setText(title);button.setAllCaps(false);button.setTextSize(14);button.setStateListAnimator(null);UiChrome.button(button,a.theme,false);button.setOnClickListener(v->action.run());return button;}
     void build(LinearLayout pageView){
@@ -75,8 +76,8 @@ final class RecentFilesUi {
         if(remaining>0)message+=" · 还有 "+remaining+" 份任务待载入";if(!indexMessage.isEmpty())message+="\n"+indexMessage;summary.setText(message);previous.setEnabled(page>0);next.setEnabled(result.hasNext);loadMore.setVisibility(remaining>0?View.VISIBLE:View.GONE);loadMore.setText("继续载入旧任务（"+remaining+"）");
         if(result.entries.isEmpty())rows.addView(a.text(viewed?"还没有成功查看的接收文件。":"当前没有匹配的已接收文件。",14,false));
         for(RecentFiles.Entry entry:result.entries){
-            LinearLayout row=new LinearLayout(a);row.setOrientation(LinearLayout.VERTICAL);row.setPadding(a.dp(12),a.dp(9),a.dp(12),a.dp(9));GradientDrawable background=new GradientDrawable();background.setColor(a.theme.wash);background.setCornerRadius(a.dp(8));background.setStroke(a.dp(1),a.theme.line);row.setBackground(background);LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);layout.topMargin=a.dp(7);rows.addView(row,layout);
-            TextView name=a.text(DirectoryEngine.name(entry.path),15,true);name.setMaxLines(2);row.addView(name);String time=entry.receivedAt>0?DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(new Date(viewed?entry.viewedAt:entry.receivedAt)):"早期记录";String detail=typeName(entry.kind)+" · "+String.format(Locale.ROOT,"%.1f MiB",entry.size/1048576.0)+" · "+(entry.estimatedTime&&!viewed?"任务时间 ":"")+time+"\n"+entry.path+"\n"+stateName(entry.state);TextView meta=a.text(detail,11,false);meta.setTextColor(a.theme.muted);row.addView(meta);row.setFocusable(true);row.setClickable(true);row.setOnClickListener(v->open(entry));
+            LinearLayout row=new LinearLayout(a);row.setOrientation(LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(a.dp(12),a.dp(9),a.dp(12),a.dp(9));GradientDrawable background=new GradientDrawable();background.setColor(a.theme.wash);background.setCornerRadius(a.dp(8));background.setStroke(a.dp(1),a.theme.line);row.setBackground(background);LinearLayout.LayoutParams layout=new LinearLayout.LayoutParams(-1,-2);layout.topMargin=a.dp(7);rows.addView(row,layout);LinearLayout copy=new LinearLayout(a);copy.setOrientation(LinearLayout.VERTICAL);row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
+            TextView name=a.text(DirectoryEngine.name(entry.path),15,true);name.setMaxLines(2);copy.addView(name);String time=entry.receivedAt>0?DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(new Date(viewed?entry.viewedAt:entry.receivedAt)):"早期记录";String detail=typeName(entry.kind)+" · "+String.format(Locale.ROOT,"%.1f MiB",entry.size/1048576.0)+" · "+(entry.estimatedTime&&!viewed?"任务时间 ":"")+time+"\n"+entry.path+"\n"+stateName(entry.state);TextView meta=a.text(detail,11,false);meta.setTextColor(a.theme.muted);copy.addView(meta);row.setFocusable(true);row.setClickable(true);row.setOnClickListener(v->open(entry));if(entry.kind.equals("image")){ImageButton thumb=new ImageButton(a);thumb.setContentDescription("打开接收图片："+entry.path);thumb.setBackground(UiChrome.rounded(a,a.theme.surface,7,a.theme.line));thumb.setPadding(a.dp(2),a.dp(2),a.dp(2),a.dp(2));LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(a.dp(62),a.dp(62));size.leftMargin=a.dp(9);row.addView(thumb,size);thumbnails.received(thumb,entry);thumb.setOnClickListener(v->open(entry));}
         }
     }
     void open(RecentFiles.Entry entry){
@@ -122,5 +123,5 @@ final class RecentFilesUi {
         if(entry.legacy)catalog.backfill(id,check.uri.toString());else catalog.states(Collections.singletonMap(id,"ready"));return catalog.get(id);
     }
     static void rememberViewed(Context context,String id)throws IOException {new RecentFiles(context.getFilesDir()).viewed(id,System.currentTimeMillis());}
-    void close(){closed=true;request++;if(searchLater!=null)handler.removeCallbacks(searchLater);worker.shutdownNow();}
+    void close(){closed=true;request++;if(searchLater!=null)handler.removeCallbacks(searchLater);worker.shutdownNow();thumbnails.close();}
 }

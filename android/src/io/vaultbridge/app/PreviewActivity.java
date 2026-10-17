@@ -24,17 +24,17 @@ public final class PreviewActivity extends Activity {
     volatile ParcelFileDescriptor activeDescriptor;
     UiTheme theme;FrameLayout body;TextView title,status;Button other,fit,encoding,previous,next,jump;
     LinearLayout pdfControls;ZoomView image;Bitmap shown;
-    RecentFiles.Entry entry;String id,kind="",charset="auto";byte[] textBytes;
+    RecentFiles.Entry entry;String id,kind="",charset="auto",sourceToken;int sourceIndex=-1;boolean sourceMode;byte[] textBytes;
     PdfRenderer pdf;int pageCount,currentPage,wantedPage;boolean pageBusy,viewed;
 
     @Override public void onCreate(Bundle state){
         boolean dark=(getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES;
         theme=UiTheme.from(new AppearanceConfig(getIntent().getBooleanExtra("appearanceDark",dark),getIntent().getIntExtra("appearanceAccent",AppearanceConfig.DEFAULT_ACCENT),"只读文件预览"));setTheme(UiChrome.themeResource(this,theme.dark,false));super.onCreate(state);UiChrome.bars(this,theme);
         if(state!=null){wantedPage=state.getInt("page",0);charset=state.getString("encoding","auto");}
-        build();id=getIntent().getStringExtra(RecentFilesUi.EXTRA_ID);
-        if(getIntent().getData()!=null||!PreviewRules.validCatalogId(id)){status.setText("此入口只能查看文件页中已接收的文件，请返回文件页重新选择。");return;}
+        build();id=getIntent().getStringExtra(RecentFilesUi.EXTRA_ID);sourceToken=getIntent().getStringExtra(SourcePreviewSession.EXTRA_TOKEN);sourceIndex=getIntent().getIntExtra(SourcePreviewSession.EXTRA_INDEX,-1);sourceMode=sourceToken!=null;
+        if(getIntent().getData()!=null||(!sourceMode&&!PreviewRules.validCatalogId(id))||(sourceMode&&id!=null)){status.setText("此入口只能查看已接收记录或本轮明确选择的来源，请返回重新选择。");return;}
         submit(()->{
-            entry=RecentFilesUi.resolve(this,id,this::check);
+            if(sourceMode){TransferUi.Source allowed=SourcePreviewSession.source(sourceToken,sourceIndex);entry=new RecentFiles.Entry("","",sourceIndex,"",allowed.path,allowed.uri.toString(),"",0,0,0,false,"ready");runOnUiThread(()->{if(!closed){title.setText(new File(allowed.path).getName());other.setEnabled(true);status.setText("来源只读预览，不会加入最近接收，也不会改变勾选。");}});entry=SourcePreviewSession.resolve(this,sourceToken,sourceIndex,this::check);}else entry=RecentFilesUi.resolve(this,id,this::check);
             Uri uri=sourceUri(entry);String mime="";if(PreviewRules.extension(entry.path).isEmpty())try{mime=getContentResolver().getType(uri);}catch(RuntimeException ignored){}kind=PreviewRules.kind(entry.path,mime);
             runOnUiThread(()->{if(closed)return;title.setText(new File(entry.path).getName());other.setEnabled(true);fit.setVisibility(kind.equals("image")||kind.equals("pdf")?View.VISIBLE:View.GONE);encoding.setVisibility(kind.equals("text")||kind.equals("markdown")?View.VISIBLE:View.GONE);});
             if(kind.equals("image"))loadImage();else if(kind.equals("pdf"))loadPdf();else if(kind.equals("text")||kind.equals("markdown"))loadText();else runOnUiThread(()->{if(!closed)status.setText("此格式暂不支持内置预览。可用其他应用打开；VaultBridge 不会编辑、解压或自动安装文件。");});
@@ -105,10 +105,13 @@ public final class PreviewActivity extends Activity {
     void pageButtons(){if(previous==null)return;previous.setEnabled(!pageBusy&&currentPage>0&&pageCount>0);next.setEnabled(!pageBusy&&currentPage+1<pageCount);jump.setEnabled(!pageBusy&&pageCount>0);if(pageCount>0)jump.setText((currentPage+1)+" / "+pageCount+" · 跳页");}
     void requestPage(int index){if(pageBusy||index<0||index>=pageCount||closed)return;pageBusy=true;pageButtons();status.setText("正在读取第 "+(index+1)+" 页…");submit(()->renderPage(index));}
     void choosePage(){if(pageCount<1||pageBusy)return;EditText input=new EditText(this);UiChrome.input(input,theme);input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);input.setSingleLine(true);input.setText(Integer.toString(currentPage+1));input.selectAll();AlertDialog dialog=UiChrome.dialog(this,theme).setTitle("前往页面（1–"+pageCount+"）").setView(input).setNegativeButton("取消",null).setPositiveButton("前往",null).create();dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{String value=input.getText().toString().trim();int number;try{if(!value.matches("[1-9][0-9]{0,4}"))throw new NumberFormatException();number=Integer.parseInt(value);if(number>pageCount)throw new NumberFormatException();}catch(NumberFormatException e){input.setError("填写 1–"+pageCount+" 的页码");return;}dialog.dismiss();requestPage(number-1);}));dialog.show();}
-    void rememberViewed(){if(viewed||closed)return;viewed=true;try{worker.execute(()->{try{RecentFilesUi.rememberViewed(this,id);}catch(IOException e){viewed=false;runOnUiThread(()->{if(!closed)status.append(" 最近查看记录未保存，可继续阅读。");});}});}catch(RejectedExecutionException ignored){}}
-    void requestOther(){if(entry==null)return;submit(()->{RecentFiles.Entry fresh=RecentFilesUi.resolve(this,id,this::check);runOnUiThread(()->{if(!closed)openOther(this,fresh,theme);});});}
+    void rememberViewed(){if(sourceMode||viewed||closed)return;viewed=true;try{worker.execute(()->{try{RecentFilesUi.rememberViewed(this,id);}catch(IOException e){viewed=false;runOnUiThread(()->{if(!closed)status.append(" 最近查看记录未保存，可继续阅读。");});}});}catch(RejectedExecutionException ignored){}}
+    void requestOther(){if(entry==null)return;submit(()->{if(sourceMode){TransferUi.Source allowed=SourcePreviewSession.source(sourceToken,sourceIndex);RecentFiles.Entry fresh=new RecentFiles.Entry("","",sourceIndex,"",allowed.path,allowed.uri.toString(),"",0,0,0,false,"ready");runOnUiThread(()->{if(!closed)openOther(this,fresh,theme,true);});}else{RecentFiles.Entry fresh=RecentFilesUi.resolve(this,id,this::check);runOnUiThread(()->{if(!closed)openOther(this,fresh,theme);});}});}
     static void openOther(Activity activity,RecentFiles.Entry entry,UiTheme theme){
-        try{if(activity.isFinishing()||activity.isDestroyed()||!PreviewRules.validCatalogId(entry.id))return;Uri uri=sourceUri(entry);String mime=PreviewRules.mime(entry.path);if(mime.equals("application/octet-stream")){String actual=null;try{actual=activity.getContentResolver().getType(uri);}catch(RuntimeException ignored){}mime=actual==null?"*/*":actual;}
+        openOther(activity,entry,theme,false);
+    }
+    private static void openOther(Activity activity,RecentFiles.Entry entry,UiTheme theme,boolean allowedSource){
+        try{if(activity.isFinishing()||activity.isDestroyed()||(!allowedSource&&!PreviewRules.validCatalogId(entry.id)))return;Uri uri=sourceUri(entry);String mime=PreviewRules.mime(entry.path);if(mime.equals("application/octet-stream")){String actual=null;try{actual=activity.getContentResolver().getType(uri);}catch(RuntimeException ignored){}mime=actual==null?"*/*":actual;}
             Intent base=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,mime).addCategory(Intent.CATEGORY_DEFAULT);base.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);base.setClipData(ClipData.newRawUri("VaultBridge 文件",uri));
             List<ResolveInfo> targets=new ArrayList<>();Set<String> seen=new HashSet<>();for(ResolveInfo found:activity.getPackageManager().queryIntentActivities(base,PackageManager.MATCH_DEFAULT_ONLY)){ActivityInfo component=found.activityInfo;if(component==null||!component.exported||component.packageName.equals(activity.getPackageName())||!seen.add(component.packageName+"/"+component.name))continue;targets.add(found);}
             if(targets.isEmpty()){UiChrome.dialog(activity,theme).setTitle("没有可打开此文件的应用").setMessage("可安装支持此格式的应用后再试，或在系统文件管理器中打开。源文件保持不变。").setPositiveButton("知道了",null).show();return;}

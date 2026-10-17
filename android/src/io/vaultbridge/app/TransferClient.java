@@ -24,6 +24,9 @@ final class TransferClient implements TransferEngine.Control {
         check();try(SSLSocket socket=lan.connect()){active=socket;check();LanClient.write(socket.getOutputStream(),request);return LanClient.checked(LanClient.read(socket.getInputStream()));}finally{active=null;}
     }
     JSONObject listing()throws IOException {return retry(a->call(object("x-list")));}
+    JSONObject compareNotes(String prefix)throws IOException {try{return call(object("x-compare").put("mode","notes").put("prefix",SendPickerModel.prefix(prefix)));}catch(JSONException e){throw new IOException(e);}}
+    JSONObject verify(String job,int file,String targetId)throws IOException {try{return call(object("x-verify").put("id",job).put("file",file).put("targetId",targetId));}catch(JSONException e){throw new IOException(e);}}
+    static void receipt(JSONObject item,JSONObject reply)throws JSONException,IOException {if(reply.optString("targetId").isEmpty())return;if(!reply.optString("sha256").equals(item.getString("sha256"))||reply.optLong("size",-1)!=item.getLong("size")||reply.optLong("completedAt",0)<=0)throw new IOException("电脑成功回执未绑定本次内容，保留任务待核验");item.put("targetId",reply.getString("targetId")).put("vaultId",reply.optString("vaultId")).put("completedAt",reply.getLong("completedAt"));}
     JSONObject status(JSONObject job,int file)throws IOException {try{return call(object("x-status").put("id",job.getString("id")).put("file",file));}catch(JSONException e){throw new IOException(e);}}
     void upload(JSONObject job,File folder)throws IOException {
         try{
@@ -33,7 +36,7 @@ final class TransferClient implements TransferEngine.Control {
             retry(a->call(request));JSONObject approved;
             for(;;){check();approved=retry(a->status(job,0));String state=approved.getString("state");if(state.equals("approved"))break;if(state.equals("rejected"))throw new LanClient.RemoteError("电脑拒绝本批接收；重新选择文件创建任务");progress.show("等待电脑确认接收，本批目标与文件列表已发送…");for(int t=0;t<12;t++){check();try{Thread.sleep(250);}catch(InterruptedException e){Thread.currentThread().interrupt();check();}}}
             for(int i=0;i<files.length();i++){
-                final int index=i;JSONObject item=files.getJSONObject(i);JSONObject remote=retry(a->status(job,index));if(remote.optBoolean("done")){item.put("done",true).put("saved",remote.optString("saved"));TransferEngine.save(folder,job);continue;}
+                final int index=i;JSONObject item=files.getJSONObject(i);JSONObject remote=retry(a->status(job,index));if(remote.optBoolean("done")){receipt(item,remote);item.put("done",true).put("saved",remote.optString("saved"));TransferEngine.save(folder,job);continue;}
                 File source=new File(folder,item.getString("local"));if(source.length()!=item.getLong("size")||!TransferEngine.hash(source).equals(item.getString("sha256")))throw new IOException("来源暂存变化，请重新选文件建立任务");
                 Map<Integer,String> complete=new HashMap<>();JSONArray blocks=remote.getJSONArray("chunks");for(int b=0;b<blocks.length();b++){JSONObject block=blocks.getJSONObject(b);complete.put(block.getInt("index"),block.getString("sha256"));}
                 long size=item.getLong("size");for(int b=0;b<TransferEngine.count(size);b++){
@@ -44,7 +47,7 @@ final class TransferClient implements TransferEngine.Control {
                         try(SSLSocket socket=lan.connect()){active=socket;check();OutputStream out=socket.getOutputStream();LanClient.write(out,put);LanClient.checked(LanClient.read(socket.getInputStream()));out.write(data);out.flush();return LanClient.checked(LanClient.read(socket.getInputStream()));}finally{active=null;}});
                     progress.show("发送 "+(i+1)+"/"+files.length()+" · "+item.getString("path")+" · 分块 "+(b+1)+"/"+TransferEngine.count(size));
                 }
-                JSONObject commit=object("x-commit").put("id",job.getString("id")).put("file",i);JSONObject reply=retry(a->call(commit));item.put("done",true).put("saved",reply.getString("saved"));TransferEngine.save(folder,job);
+                JSONObject commit=object("x-commit").put("id",job.getString("id")).put("file",i);JSONObject reply=retry(a->call(commit));receipt(item,reply);item.put("done",true).put("saved",reply.getString("saved"));TransferEngine.save(folder,job);
             }
         }catch(JSONException e){throw new IOException("传输任务格式错误",e);}
     }

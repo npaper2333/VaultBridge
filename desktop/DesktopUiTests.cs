@@ -31,6 +31,26 @@ namespace VaultBridge {
                 for(int x=Math.Max(0,buffer.Width-7);x<buffer.Width-1;x++)for(int y=2;y<buffer.Height-2;y++){Color pixel=buffer.GetPixel(x,y);if(pixel.R>185&&pixel.G>185&&pixel.B>185)return false;}
             }return true;
         }
+        internal static void CheckFeedbackNavigation(MainForm form,Action<bool,string> check){
+            ProcessStartInfo requested=null;string result;int calls=0;
+            bool opened=TryOpenFeedbackIssue(false,info=>{calls++;requested=info;},out result);
+            check(opened&&calls==1&&requested!=null&&requested.FileName=="https://github.com/npaper2333/VaultBridge/issues/new"&&requested.UseShellExecute,"clicked issue navigation requests only the fixed HTTPS page through the default browser");
+            Uri target=new Uri(requested.FileName);check(target.Query.Length==0&&target.Fragment.Length==0&&target.UserInfo.Length==0&&String.IsNullOrEmpty(requested.Arguments)&&String.IsNullOrEmpty(requested.WorkingDirectory),"issue navigation never prefills drafts directories device data arguments or credentials");
+            check(result.Contains("已请求")&&!result.Contains("已提交"),"browser launch does not claim an issue was submitted");
+            opened=TryOpenFeedbackIssue(false,info=>{throw new InvalidOperationException("synthetic browser failure");},out result);
+            check(!opened&&result.Contains("无法启动")&&result.Contains("复制 Issue 链接")&&!result.Contains("synthetic"),"browser failure preserves an explicit copy-link fallback without exposing exception details");
+            opened=TryOpenFeedbackIssue(true,info=>{calls++;},out result);check(!opened&&calls==1&&result.Contains("预览"),"preview navigation never invokes even an injected browser launcher");
+            form.SelectPage(3);ScrollFrame frame=(ScrollFrame)form.pages[3].Parent;frame.SyncRange();frame.ScrollTo(frame.Rail.Maximum);Application.DoEvents();
+            check(!ControlsOf(form.pages[3]).OfType<Button>().Any(b=>b.Text.Contains("草稿")||b.Text=="提交建议"||b.Text=="保存草稿"),"settings no longer exposes the old in-app submission or draft form");
+            bool oldHelp=form.state.showHelp;form.state.showHelp=false;form.UpdateHelp();
+            check(form.feedbackPrivacyNotice.Visible&&!form.descriptions.Contains(form.feedbackPrivacyNotice)&&form.feedbackPrivacyNotice.Text.Contains("登录 GitHub")&&form.feedbackPrivacyNotice.Text.Contains("内容公开"),"GitHub login and public-content disclosure remains visible when help is hidden");
+            int windows=Application.OpenForms.Count;form.feedbackIssue.PerformClick();Application.DoEvents();
+            check(form.feedbackServiceStatus.Text.Contains("未启动浏览器")&&Application.OpenForms.Count==windows,"real preview button opens neither browser nor a replacement feedback form");
+            form.feedbackCopyLink.PerformClick();check(form.feedbackServiceStatus.Text.Contains("未改动剪贴板"),"preview copy-link action preserves the user's clipboard");
+            form.feedbackWeChat.PerformClick();check(form.feedbackServiceStatus.Text.Contains("未改动剪贴板")&&form.feedbackWeChat.Text=="复制微信号","WeChat copy remains available while preview tests preserve the clipboard");
+            check(form.feedbackCopyLink.Text=="复制 Issue 链接"&&ControlsOf(form.pages[3]).OfType<Label>().Any(l=>l.Text.Contains("nitro1447")),"fixed-link copy fallback and existing WeChat contact stay accessible");
+            form.state.showHelp=oldHelp;form.UpdateHelp();
+        }
         internal static int CheckAppearance(string output) {
             Directory.CreateDirectory(output);List<string> results=new List<string>();int count=0;Exception inputFailure=null;
             System.Threading.ThreadExceptionEventHandler handler=delegate(object sender,System.Threading.ThreadExceptionEventArgs e){inputFailure=e.Exception;};Application.ThreadException+=handler;
@@ -64,9 +84,9 @@ namespace VaultBridge {
                     form.state.vault=notes;form.RefreshAppearance(true);check(form.detectedAppearance.Dark,"switch back rereads that vault");
                     form.SelectPage(3);string updateTextBefore=form.updateMessage.Text,updateLogBefore=form.activity.Text;form.StartUpdateCheck();form.CheckForUpdate(true);
                     check(!form.updateStarted&&!form.updateBusy&&form.availableUpdate==null&&form.updateMessage.Text.Contains("预览"),"preview startup and manual update check never start network work");
-                    UpdateInfo candidate=new UpdateInfo{version="0.4.3",page=UpdateRules.Repo+"/releases/tag/v0.4.3",notes="Synthetic update preview; no download or process launch.",prerelease=true};form.availableUpdate=candidate;form.RefreshUpdateButtons();
+                    UpdateInfo candidate=new UpdateInfo{version="0.6.0",page=UpdateRules.Repo+"/releases/tag/v0.6.0",notes="Synthetic update preview; no download or process launch.",prerelease=true};form.availableUpdate=candidate;form.RefreshUpdateButtons();
                     check(form.updateBadge.Visible&&form.updateDetails.Visible&&!form.updateDownload.Visible&&!form.updateSwitch.Visible,"digest missing exposes release notes without download or switch");
-                    candidate.sha256=new string('a',64);form.updateMessage.Text="示例：0.4.3 已通过校验，可以切换；本图未下载或启动任何更新。";form.RefreshUpdateButtons();
+                    candidate.sha256=new string('a',64);form.updateMessage.Text="示例：0.6.0 已通过校验，可以切换；本图未下载或启动任何更新。";form.RefreshUpdateButtons();
                     check(form.updateDownload.Visible&&form.updateDownload.Enabled&&!form.updateSwitch.Visible,"valid digest exposes download before any prepared executable");
                     form.preparedUpdate=new UpdatePackage{info=candidate};form.RefreshUpdateButtons();check(!form.updateDownload.Visible&&form.updateSwitch.Visible&&form.updateSwitch.Enabled,"prepared package exposes explicit switch instead of repeat download");
                     form.RefreshAppearance(true);check(ReferenceEquals(form.availableUpdate,candidate)&&form.preparedUpdate.info==candidate&&form.updateMessage.Text.Contains("示例")&&form.activity.Text==updateLogBefore,"appearance refresh preserves update state without changing operational log");
@@ -109,7 +129,9 @@ namespace VaultBridge {
                         before=clicked;input.Enabled=false;input.PerformClick();check(clicked==before,"disabled rounded button cannot activate");form.Controls.Remove(input);form.Controls.Remove(baseline);
                     }
                     form.state.showHelp=false;form.UpdateHelp();check(!form.descriptions.Any(x=>x.Visible),"help visibility still works");form.state.showHelp=true;form.UpdateHelp();
-                    SettingsStore temp=new SettingsStore(Path.Combine(output,"appearance-settings"));temp.Save(form.state);Settings saved=temp.Load();check(saved.vault==notes&&saved.style=="night"&&saved.showHelp,"existing local settings retained without migration");check(!saved.checkUpdatesOnStart,"disabled startup update check survives DPAPI settings round trip");
+                    form.SelectPage(3);string settingsLog=form.activity.Text;string[] settingsScopes=form.SelectedScopes();form.backgroundPreference.SelectedIndex=2;check(form.state.themeMode=="light"&&!form.detectedAppearance.Dark,"native background preference switches to light independently");form.customAccentPreference.Text="#d9ab3a";ControlsOf(form).OfType<Button>().First(b=>b.Text=="应用自定义颜色").PerformClick();check(form.state.accentMode=="custom"&&form.palette.Accent.ToArgb()==ColorTranslator.FromHtml("#d9ab3a").ToArgb()&&!form.detectedAppearance.Dark,"native custom accent keeps independently chosen background");form.backgroundPreference.SelectedIndex=3;check(form.detectedAppearance.Dark&&form.palette.Accent.ToArgb()==ColorTranslator.FromHtml("#d9ab3a").ToArgb(),"native dark preference retains custom accent");check(form.activity.Text==settingsLog&&form.SelectedScopes().SequenceEqual(settingsScopes)&&!form.state.checkUpdatesOnStart,"settings changes preserve work log authorization range and update choice");check(!ControlsOf(form).OfType<Button>().Any(b=>b.Text.Contains("服务地址"))&&form.feedbackIssue.Text=="到 GitHub 提交建议","feedback settings use the fixed GitHub route without endpoint configuration");CheckFeedbackNavigation(form,check);ScrollFrame settingsFrame=(ScrollFrame)form.pages[3].Parent;settingsFrame.SyncRange();settingsFrame.ScrollTo(settingsFrame.Rail.Maximum);Shot(form,Path.Combine(output,"desktop-settings-feedback-preview.png"));check(settingsFrame.NativeVerticalStyle==0&&DarkRightEdge(settingsFrame.Rail),"extended settings page retains buffered dark scrollbar");form.backgroundPreference.SelectedIndex=0;form.accentPreference.SelectedIndex=0;form.SelectPage(0);
+
+                    SettingsStore temp=new SettingsStore(Path.Combine(output,"appearance-settings"));temp.Save(form.state);Settings saved=temp.Load();check(saved.vault==notes&&saved.style=="night"&&saved.showHelp,"existing local settings retained without migration");check(!saved.checkUpdatesOnStart,"disabled startup update check survives DPAPI settings round trip");check(saved.themeMode=="obsidian"&&saved.accentMode=="obsidian"&&saved.customAccent=="#d9ab3a","independent appearance settings survive current-user protected persistence");
                     form.state.port=0;form.state.scopes=new List<string>{""};form.server=new VaultServer(form.state,delegate{},delegate{});form.server.Start(true);VaultServer running=form.server;int port=running.Port;
                     File.WriteAllText(config,themes[0]);form.RefreshAppearance(true);File.WriteAllText(config,themes[1]);form.RefreshAppearance(true);check(ReferenceEquals(running,form.server)&&running.Port==port,"appearance refresh preserves running share");form.StopServer();
                     VaultIndex index=new VaultIndex(notes,"appearance-scope",new[]{""});check(!index.Scan(new[]{""}).files.Any(x=>x.path.StartsWith(".obsidian")),"read exception does not expose hidden configuration to sync");

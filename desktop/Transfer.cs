@@ -15,9 +15,11 @@ namespace VaultBridge {
     }
     public class TransferJob {
         public string id, owner, mode, prefix, root, state = "pending";
+        public string targetId, vaultId;
         [System.Web.Script.Serialization.ScriptIgnore] public volatile bool revokeRequested;
         public List<FileItem> files = new List<FileItem>();
         public Dictionary<string,string> saved = new Dictionary<string,string>();
+        public Dictionary<string,TransferReceipt> receipts = new Dictionary<string,TransferReceipt>();
     }
     public static class TransferRules {
         public const int Chunk = 4 * 1024 * 1024;
@@ -41,7 +43,7 @@ namespace VaultBridge {
         }
     }
     // All incoming writes are explicitly approved; chunk files are immutable and retained.
-    public sealed class TransferHub {
+    public sealed partial class TransferHub {
         readonly string directory;
         readonly Settings settings;
         readonly Action<TransferJob> confirm;
@@ -97,11 +99,12 @@ namespace VaultBridge {
         static void Approved(TransferJob job){if(job.state!="approved"||job.revokeRequested)throw new IOException(job.state=="rejected"||job.revokeRequested?"电脑拒绝或撤销了本批接收":"等待电脑确认接收");}
         public void Approve(string id,string root,bool accepted){TransferJob job;lock(gate)job=jobs[id];lock(job){if(job.state!="pending"||job.revokeRequested)return;if(!accepted){job.state="rejected";SaveJob(job);return;}
             string full=Path.GetFullPath(root);foreach(FileItem f in job.files)Destination(job,full,Join(job.prefix,f.path));
-            long total=job.files.Sum(f=>f.size);bool sameVolume=Path.GetPathRoot(Path.GetFullPath(directory)).Equals(Path.GetPathRoot(full),StringComparison.OrdinalIgnoreCase);TransferRules.Space(directory,total*(sameVolume?3:2));TransferRules.Space(full,total);job.root=full;job.state="approved";SaveJob(job);log("已允许一批"+(job.mode=="notes"?"笔记回传":"普通文件接收")+"，同名内容变化将另存");}}
+            long total=job.files.Sum(f=>f.size);bool sameVolume=Path.GetPathRoot(Path.GetFullPath(directory)).Equals(Path.GetPathRoot(full),StringComparison.OrdinalIgnoreCase);TransferRules.Space(directory,total*(sameVolume?3:2));TransferRules.Space(full,total);job.root=full;job.vaultId=settings.vaultId;job.targetId=TargetIdentity(job.mode,full,job.prefix,job.vaultId);job.state="approved";SaveJob(job);log("已允许一批"+(job.mode=="notes"?"笔记回传":"普通文件接收")+"，同名内容变化将另存");}}
         static string Join(string prefix,string path){return String.IsNullOrEmpty(prefix)?path:prefix+"/"+path;}
         public bool Handle(string action,Dictionary<string,object> request,Stream stream,string token){
             if(!action.StartsWith("x-",StringComparison.Ordinal))return false;
                 if(action=="x-list"){Wire.Write(stream,Listing());return true;}
+                if(action=="x-compare"){Wire.Write(stream,Compare(request));return true;}
                 if(action=="x-note-get"){
                     string relative=Paths.Normalize(Wire.Text(request,"path"));FileItem item;lock(gate)if(!notes.TryGetValue(relative,out item)||!Crypto.Equal(item.sha256,Wire.Text(request,"sha256")))throw new IOException("笔记清单变化，请重新获取");
                     VaultIndex index=new VaultIndex(settings.vault,settings.vaultId,settings.scopes);string source=index.FilePath(relative);FileInfo info=new FileInfo(source);if(!info.Exists||info.Length!=item.size||info.LastWriteTimeUtc.Ticks!=item.modified)throw new IOException("电脑笔记变化，请刷新清单");
@@ -120,8 +123,9 @@ namespace VaultBridge {
                     lock(job){Job(id,token);if(job.mode!=mode||job.prefix!=prefix||Json.Encode(job.files)!=Json.Encode(files))throw new IOException("任务内容变化，请创建新任务");Wire.Write(stream,new {ok=true,state=job.state});Prompt(job);}return true;
                 }
                 TransferJob current=Job(Wire.Text(request,"id"),token);lock(current){int fileIndex=Number(request,"file");if(fileIndex<0||fileIndex>=current.files.Count)throw new IOException("文件编号错误");FileItem file=current.files[fileIndex];
-                if(action=="x-status"){Wire.Write(stream,new {ok=true,state=current.state,done=current.saved.ContainsKey(fileIndex.ToString()),saved=current.saved.ContainsKey(fileIndex.ToString())?current.saved[fileIndex.ToString()]:"",chunks=Blocks(current,fileIndex,true)});return true;}
+                if(action=="x-status"){Wire.Write(stream,Status(current,fileIndex));return true;}
                 Approved(current);
+                if(action=="x-verify"){Wire.Write(stream,Verify(current,fileIndex,request));return true;}
                 if(action=="x-has"){int block=Number(request,"block");int length=TransferRules.Length(file.size,block);string hash=Wire.Text(request,"sha256");if(!TransferRules.Hash(hash))throw new IOException("无效分块哈希");string local=BlockPath(current,fileIndex,block,hash);Wire.Write(stream,new {ok=true,present=File.Exists(local)&&new FileInfo(local).Length==length&&Crypto.Equal(Crypto.HashFile(local),hash)});return true;}
                 if(action=="x-put"){
                     if(current.saved.ContainsKey(fileIndex.ToString()))throw new IOException("该文件已保存，请刷新状态");int block=Number(request,"block"),length=TransferRules.Length(file.size,block);string hash=Wire.Text(request,"sha256");if(!TransferRules.Hash(hash))throw new IOException("分块哈希错误");TransferRules.Space(directory,length);
@@ -130,7 +134,7 @@ namespace VaultBridge {
                     string ready=BlockPath(current,fileIndex,block,hash);foreach(string previous in Directory.EnumerateFiles(Folder(current),fileIndex+"-"+block+"-*.block"))if(previous!=ready)File.Move(previous,Path.Combine(Folder(current),"replaced-"+Guid.NewGuid().ToString("N")+".partial"));if(File.Exists(ready)){if(Crypto.HashFile(ready)!=hash)File.Move(ready,Path.Combine(Folder(current),"corrupt-"+Guid.NewGuid().ToString("N")+".partial"));else{Wire.Write(stream,new {ok=true});return true;}}File.Move(pending,ready);Wire.Write(stream,new {ok=true});return true;
                 }
                 if(action=="x-commit"){
-                    string saved;if(current.saved.TryGetValue(fileIndex.ToString(),out saved)){Wire.Write(stream,new {ok=true,saved=saved});return true;}
+                    string saved;if(current.saved.TryGetValue(fileIndex.ToString(),out saved)){Wire.Write(stream,ReceiptReply(current,fileIndex,saved));return true;}
                     List<BlockRecord> blocks=Blocks(current,fileIndex,true);if(blocks.Count!=TransferRules.Count(file.size))throw new IOException("仍有缺失或损坏分块");TransferRules.Space(directory,file.size);TransferRules.Space(current.root,file.size);
                     string assembled=Path.Combine(Folder(current),"assembled-"+fileIndex+"-"+Guid.NewGuid().ToString("N")+".bin");using(FileStream output=new FileStream(assembled,FileMode.CreateNew,FileAccess.Write)){foreach(BlockRecord b in blocks.OrderBy(b=>b.index))using(FileStream input=File.OpenRead(BlockPath(current,fileIndex,b.index,b.sha256)))input.CopyTo(output);output.Flush(true);}
                     if(new FileInfo(assembled).Length!=file.size||!Crypto.Equal(Crypto.HashFile(assembled),file.sha256))throw new IOException("全文件校验失败，未写入目标");
@@ -138,7 +142,7 @@ namespace VaultBridge {
                     while(File.Exists(Destination(current,current.root,chosen))||Directory.Exists(Destination(current,current.root,chosen))){string existing=Destination(current,current.root,chosen);if(File.Exists(existing)&&new FileInfo(existing).Length==file.size&&Crypto.Equal(Crypto.HashFile(existing),file.sha256))break;chosen=TransferRules.Alternate(desired,++n);if(n>10000)throw new IOException("重名文件过多");}
                     string target=Destination(current,current.root,chosen);Directory.CreateDirectory(Path.GetDirectoryName(target));target=Destination(current,current.root,chosen);
                     if(!File.Exists(target)){string landing=Path.Combine(Path.GetDirectoryName(target),".VaultBridge-"+Guid.NewGuid().ToString("N")+".partial");using(FileStream input=File.OpenRead(assembled))using(FileStream output=new FileStream(landing,FileMode.CreateNew,FileAccess.Write)){input.CopyTo(output);output.Flush(true);}if(!Crypto.Equal(Crypto.HashFile(landing),file.sha256))throw new IOException("目标暂存校验失败");Approved(current);Destination(current,current.root,chosen);File.Move(landing,target);}
-                    if(!Crypto.Equal(Crypto.HashFile(target),file.sha256))throw new IOException("目标校验失败；暂存保留，可继续");current.saved[fileIndex.ToString()]=chosen;SaveJob(current);Wire.Write(stream,new {ok=true,saved=chosen});log("接收完成："+chosen);return true;
+                    if(!Crypto.Equal(Crypto.HashFile(target),file.sha256))throw new IOException("目标校验失败；暂存保留，可继续");RecordCompleted(current,fileIndex,chosen);Wire.Write(stream,ReceiptReply(current,fileIndex,chosen));log("接收完成："+chosen);return true;
                 }
                 throw new IOException("不支持的传输操作");
             }

@@ -2,7 +2,7 @@
 
 当前优先级是完成 MatePad Air 12 / HarmonyOS 4.2 的真实验收和修复可复现问题，没有承诺完成时间。
 
-0.4.0 起提供普通文件互传和主动笔记回传，0.4.2 加入应用更新。当前 Android 0.4.3 新增接收文件页与离线只读预览，Windows 保持 0.4.2。下载见 [Android 0.4.3](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.3)和 [Windows 0.4.2](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.2)，规则见 [file-transfer.md](file-transfer.md)、[file-library.md](file-library.md)和 [updates.md](updates.md)；历史版本保留，验证状态见 [testing.md](testing.md)。
+0.4.0 起提供普通文件互传和主动笔记回传，0.4.2 加入应用更新，Android 0.4.3 加入接收文件页与离线只读预览。当前 Windows / Android 0.5.2 预发布整合集中设置、Android 发送筛选/来源图片预览、按目标核验后隐藏，以及公开 GitHub Issue 反馈入口；这些不是后续待实现清单。下载以 [Releases](https://github.com/npaper2333/VaultBridge/releases)为准；规则见 [file-transfer.md](file-transfer.md)、[file-library.md](file-library.md)、[settings-feedback.md](settings-feedback.md)和 [updates.md](updates.md)。历史版本保留，验证状态见 [testing.md](testing.md)。
 
 1. 实测微信 ZIP/普通文件入口、文件权限持久化、扫码相机、Obsidian 刷新与目录操作。
 2. 验收普通文件双向传输、大文件、同名保留、手动笔记回传的根目录/子目录目标与电脑逐批批准。
@@ -11,5 +11,6 @@
 5. 实测 Android 系统覆盖安装/来源权限、Windows 点击后停止分享切换、无网络及关闭启动检查，确认旧文件、笔记和设置保留。
 6. 实测接收索引、旧任务核对、图片/PDF/文本预览与外部打开在手机/平板上的权限、手势和大文件限制。
 7. 根据实测改善文件提供器错误说明、大库使用体验及无需云端的连接发现，保持用户决定范围、目标与写入批准。
+8. 实测发送筛选、来源缩略图/全图、目标变化后的只读对比与隐藏规则，以及主题色滑杆、系统字体放大和外部浏览器跳转；反馈以用户在 GitHub 网页最终公开提交为准。
 
 云服务、自动回写主库、传播删除与收费服务不属于当前计划。问题和建议请提供自建最小示例，不提交真实笔记。

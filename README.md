@@ -6,11 +6,13 @@
 
 **局域网直传，文件内容原样保真。** 普通文件按原始字节传输，应用不对图片、音视频做有损压缩或转码，并用 SHA-256 校验内容完整性。笔记同步及 ZIP 导入可能按目录映射修正 Markdown 链接，详见 [传输保真说明](docs/file-transfer.md#原文件保真与完整性)。
 
-**免费、无云端、MIT 开源。当前版本为 Android 0.4.3 / Windows 0.4.2 预发布。** Android 新增最近接收/查看、搜索筛选和离线只读预览；应用内更新、普通文件互传、分块续传和手动笔记回传继续保留。
+**免费、文件传输无云端、MIT 开源。Windows / Android 0.5.2 预发布。** 包含独立主题设置、Android 发送筛选与来源图片预览、按目标和内容核验后隐藏，以及公开 GitHub 反馈入口。普通文件互传、分块续传、手动笔记回传和 Android 接收文件只读预览继续保留。
 
-[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.4.3) · [快速上手](docs/quick-start.md) · [接收文件与预览](docs/file-library.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
+[下载安装包](https://github.com/npaper2333/VaultBridge/releases/tag/v0.5.2) · [快速上手](docs/quick-start.md) · [接收文件与预览](docs/file-library.md) · [应用更新](docs/updates.md) · [源码构建](docs/building.md) · [问题反馈](https://github.com/npaper2333/VaultBridge/issues)
 
-使用中遇到问题或有建议，欢迎添加作者微信：**`nitro1447`**（备注“VaultBridge 反馈”），也可通过 [GitHub Issues](https://github.com/npaper2333/VaultBridge/issues) 反馈。
+使用中遇到问题或有建议，可到 [GitHub 新 Issue 页面](https://github.com/npaper2333/VaultBridge/issues/new) 反馈：需要登录 GitHub，提交的内容公开。希望私下交流，可添加作者微信：**`nitro1447`**（备注“VaultBridge 反馈”）。
+
+**当前版本：Windows / Android 0.5.2，Android 版本码 12。** App 内建议表单已取消，设置中点击后到外部浏览器填写公开 Issue，需要登录，由使用者在网页最终提交。不读取或自动上传旧草稿、笔记和其他本机数据。本版变化见 [0.5.2 说明](docs/release-v0.5.2.md)，操作见 [设置与建议交流](docs/settings-feedback.md)。真实设备与 Windows 更新切换的验收边界保留。
 
 ## 下载与兼容性
 
@@ -18,18 +20,18 @@
 
 | 平台/文件 | 用途 |
 | --- | --- |
-| [Windows 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/VaultBridge-Desktop-0.4.2-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
-| [Android 0.4.3 APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/VaultBridge-Android-0.4.3.apk) | 手机/平板共用，目标 API 35、版本码 9；已有同签名版本覆盖安装，不先卸载。 |
-| [Android 0.4.3 完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/VaultBridge-Android-0.4.3-local.zip) | APK、Android 指南、文件/预览/更新/验收说明、校验和、MIT 与第三方许可。 |
-| [Android 0.4.3 SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.3/SHA256SUMS.txt) | 核对本次 APK 和 Android 完整包；[Windows 0.4.2 校验](https://github.com/npaper2333/VaultBridge/releases/download/v0.4.2/SHA256SUMS.txt)保留在其原 Release。 |
+| [Windows 0.5.2 便携版 ZIP](https://github.com/npaper2333/VaultBridge/releases/download/v0.5.2/VaultBridge-Desktop-0.5.2-portable.zip) | 完整解压后运行 EXE；保留旁边同名 `.exe.config`，用于高清缩放。使用 .NET Framework 4.8。 |
+| [Android 0.5.2 APK](https://github.com/npaper2333/VaultBridge/releases/download/v0.5.2/VaultBridge-Android-0.5.2.apk) | 手机/平板共用，最低 API 26、目标 API 35、版本码 12；同签名覆盖安装，不先卸载。 |
+| [0.5.2 两端完整包](https://github.com/npaper2333/VaultBridge/releases/download/v0.5.2/VaultBridge-0.5.2-local.zip) | 两端程序、指南、设置/传输/预览/更新/验收说明、MIT 与第三方许可。`local` 指本地运行分发包。 |
+| [0.5.2 SHA256SUMS.txt](https://github.com/npaper2333/VaultBridge/releases/download/v0.5.2/SHA256SUMS.txt) | 核对以上三个资产的 SHA-256。 |
 
-**应用内更新入口从 0.4.2 起提供。旧 0.4.0 / Android 0.4.1 需先手动安装一次对应平台新版，可直接装 Android 0.4.3 / Windows 0.4.2。** 本次不发布 Desktop 0.4.3，Windows 更新器跳过缺少其平台资产的 Release。历史版本保留。
+**应用内更新入口从 0.4.2 起提供。旧 0.4.0 / Android 0.4.1 需手动安装一次新版，可直接装两端 0.5.2。** 两端一起升级以使用完整发送前对比；同签名 APK 覆盖安装，Windows 保留同名配置，历史安装包和 Release 均保留。更新器仍会跳过缺少其平台资产的历史版本。
 
 Huawei MatePad Air 12 / HarmonyOS 4.2 是重点验收设备之一，不是专属运行范围；其系统安装、触控、微信入口和目录授权仍需实测，其他机型也按 [验收清单](docs/acceptance.md)检查。
 
 APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源码仓库不含签名私钥、SDK/JDK、安装包或笔记；安装包放在 Releases。自行构建的 APK 需用自己的密钥签名，通常不能覆盖官方签名版本。Obsidian 与微信需自行安装，本项目不是它们的官方产品。
 
-本地构建产物按 `dist/<版本族>/<完整版本>/` 整理，例如 Android 0.4.3 在 `dist/0.4/0.4.3/`，Windows 0.4.2 在 `dist/0.4/0.4.2/`；同版程序、配置、ZIP、校验与说明放一起。混合总包归较新 Android 版本目录，旧公共文件无法确定归版时保留在 `dist/shared/`。GitHub Release 的下载文件名不变。
+本地构建产物按 `dist/<版本族>/<完整版本>/` 整理，本版两端在 `dist/0.5/0.5.2/`；同版程序、配置、ZIP、校验与说明放一起。混合总包归较新平台版本目录，旧公共文件无法确定归版时保留在 `dist/shared/`。GitHub Release 使用上表稳定文件名。
 
 ## 能做什么
 
@@ -39,7 +41,8 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 | 微信 ZIP 导入 | “用其他应用打开”选择 VaultBridge，应用解压并保存至所选库；也可在应用内选择 ZIP。支持中文目录和附件。 |
 | 备份与冲突 | 更新前备份；平板已有本地编辑时保留原笔记，将电脑版本放进冲突记录。支持预览、采用来源版本与恢复旧版。 |
 | 多库与目录整理 | 记住/切换库位置、浏览、新建文件夹、重命名、移动、维护同步目录对应；可以复制笔记到另一空库，保留原库。 |
-| 自动外观 | 固定“晴湖书架”布局，读取当前库的基础黑/白模式和强调色；中性背景、适度圆角，少量重要按钮使用强调色。 |
+| 外观设置 | 固定“晴湖书架”布局；主题色可跟随 Obsidian 或自定义，深浅模式独立选择。中性背景、适度圆角，少量重要按钮使用强调色。 |
+| 发送前筛选与核验（Android） | 搜索、类型筛选、来源图片缩略图/大图；笔记回传对比授权库范围，普通文件重新核验原任务回执，只隐藏当前目标路径和内容确认相同的项目。 |
 | 离线使用 | 局域网不需要互联网；电脑关闭后，平板已接收的笔记仍可在 Obsidian 离线阅读。 |
 | 普通文件互传（0.4.0） | 独立接收目录，选择文件或文件夹，两端手动互传；ZIP 原样保存，同名变化另存，电脑接收逐批确认。 |
 | 大文件与续传（0.4.0） | 8 GiB 单文件、4 MiB 分块、暂停/继续、持久任务队列，网络故障有限退避后只补缺失块。 |
@@ -47,12 +50,12 @@ APK 使用项目本地测试签名，Windows EXE 未签署发行者证书。源�
 | 应用更新（0.4.2） | 启动后台检查可关闭，显示新版本说明；点击才下载并校验。Android 交系统确认安装，Windows 点击切换后停止分享，旧文件和设置保留。 |
 | 文件与预览（Android 0.4.3） | “文件”页查看最近接收/最近查看、搜索文件名和筛选类型；图片/PDF/文本与 Markdown 源码离线只读预览，其他格式交外部应用打开。 |
 
-不自动回写电脑，不传播删除，不建设云服务。0.4.0 的手动回传与常规主库同步分开，见 [普通文件与笔记回传](docs/file-transfer.md)。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
+不自动回写电脑，不传播删除，笔记和普通文件不经过云服务。GitHub 反馈在浏览器中由使用者最终提交，内容公开；它与局域网传输独立，不需要部署建议服务器。手动回传与常规主库同步分开，见 [普通文件与笔记回传](docs/file-transfer.md)。外观配置只读，不同步 `.obsidian` 或执行主题 CSS。
 
 ## 五步开始
 
-1. 完整解压 Windows 0.4.2 包，打开 `VaultBridge-Desktop-0.4.2.exe`，选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
-2. 把 `VaultBridge-Android-0.4.3.apk` 发送到手机/平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
+1. 完整解压所下载的 Windows 包，打开其中的 EXE，并保留旁边同名 `.exe.config`。选择电脑主库和分享范围，点击“开始分享”。防火墙若询问，仅按实际可信网络授权。
+2. 把对应 Android APK 发送到手机/平板并覆盖安装，按系统提示为当前来源授予安装权限，保持安全检查开启。
 3. 平板打开 VaultBridge，选择目标文件夹；在 Obsidian 中使用同一个文件夹。建议首次使用临时测试库。
 4. 两端连接同一局域网，平板扫码电脑二维码，或粘贴电脑端复制的配对文字。
 5. 平板“选择笔记并同步”；以后用“同步上次范围”。电脑窗口关闭后静默留在托盘，右键“退出”完全停止。
